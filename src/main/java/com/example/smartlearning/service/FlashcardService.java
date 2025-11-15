@@ -63,7 +63,7 @@ public class FlashcardService {
             FlashcardSet newSet = new FlashcardSet();
             newSet.setUserSubject(userSubject);
             newSet.setTitle(requestDTO.getTitle());
-            newSet.setAiModelUsed(aiGenerationService.getAiModelUsed());
+            newSet.setAiModelUsed("gemini-pro");
 
             List<Flashcard> cardEntities = aiCards.stream().map(aiCard -> {
                 Flashcard card = new Flashcard();

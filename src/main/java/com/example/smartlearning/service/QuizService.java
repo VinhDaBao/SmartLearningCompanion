@@ -65,7 +65,7 @@ public class QuizService {
             Quiz newQuiz = new Quiz();
             newQuiz.setUserSubject(userSubject);
             newQuiz.setTitle(requestDTO.getTopic() != null ? requestDTO.getTopic() : "Quiz " + userSubject.getSubject().getSubjectName());
-            newQuiz.setAiModelUsed(aiGenerationService.getAiModelUsed());
+            newQuiz.setAiModelUsed("gemini-pro");
             newQuiz.setGeneratedAt(LocalDateTime.now());
 
             List<QuizQuestions> questionEntities = new ArrayList<>();

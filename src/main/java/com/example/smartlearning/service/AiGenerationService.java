@@ -1,10 +1,12 @@
 package com.example.smartlearning.service;
 
+// --- IMPORT CÁC THƯ VIỆN SDK MỚI ---
 import com.google.genai.Client;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+// --- --- --- --- --- --- --- --- --- ---
 
 import com.example.smartlearning.dto.FlashcardDTO;
 import com.example.smartlearning.model.Subject;
@@ -12,11 +14,12 @@ import com.example.smartlearning.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct; // Import PostConstruct mới
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+// Xóa các import không cần nữa (RestTemplate, HttpHeaders, UriComponentsBuilder, các DTO cũ)
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,35 +27,49 @@ import java.util.List;
 @Service
 public class AiGenerationService {
 
+    // XÓA RestTemplate
+    // @Autowired
+    // private RestTemplate restTemplate;
+
     @Value("${google.gemini.api.key}")
     private String geminiApiKey;
 
-    @Value("${google.gemini.api.model}")
-    private String aiModelUsed;
+    // XÓA URL API
+    // @Value("${google.gemini.api.url}")
+    // private String geminiApiUrl;
 
     @Autowired
     PDFService pdfService;
 
+    // Vẫn cần ObjectMapper để parse JSON mock và cho hàm PDF
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // THÊM CLIENT CỦA SDK
     private Client geminiClient;
 
+    // THÊM HÀM INIT ĐỂ KHỞI TẠO CLIENT
     @PostConstruct
     public void init() {
+        // Khởi tạo Client bằng API Key từ application.properties
         this.geminiClient = Client.builder()
                 .apiKey(this.geminiApiKey)
                 .build();
     }
 
-    public String getAiModelUsed() {
-        return aiModelUsed;
-    }
-
+    // HÀM HELPER (Giữ lại để parse JSON trả về từ mock)
+    // Hàm extractJsonString không còn cần thiết cho SDK, nhưng
+    // hàm generateFlashcardsForChunk vẫn dùng mapper nên ta giữ lại
     private String extractJsonString(String rawText) {
         if (rawText == null) return null;
+        // SDK trả về text sạch, không cần replace ```json
+        // Chỉ cần trim()
         return rawText.trim();
     }
 
+
+    /**
+     * Tạo một Lộ trình học (Study Plan) - Cập nhật dùng SDK
+     */
     public String generateStudyPlan(User user,
                                     Subject subject,
                                     String customPrompt,
@@ -83,16 +100,21 @@ public class AiGenerationService {
         System.out.println("--- GỬI PROMPT TỚI GEMINI (StudyPlan) bằng SDK ---");
 
         try {
+            // 1. Tạo System Instruction
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
+            // 2. Tạo Config (Markdown là text/plain)
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
-                    .responseMimeType("text/plain")
+                    .responseMimeType("text/plain") // Yêu cầu text
                     .build();
 
+            // 3. Gọi API
+            // Dùng model mới "gemini-2.5-flash" theo tài liệu
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
+            // 4. Lấy text
             String content = response.text();
 
             if (content != null && !content.isEmpty()) {
@@ -102,14 +124,17 @@ public class AiGenerationService {
             }
         } catch (Exception e) {
             System.err.println("Lỗi khi gọi Gemini API (StudyPlan) bằng SDK: " + e.getMessage());
-            String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
+            // SỬA LỖI MOCK DATA: Trả về text hợp lệ
             return "# Lộ trình học " + subject.getSubjectName() + " (Mock Fallback)\n\n" +
                     "**API Lỗi:**\n" +
-                    "* " + safeErrorMessage;
+                    "* " + e.getMessage().replace("\"", "'").replace("'", "`"); // Làm sạch lỗi
         }
     }
 
 
+    /**
+     * Tạo một bộ Quiz - Cập nhật dùng SDK (Ép kiểu JSON)
+     */
     public String generateQuiz(User user, Subject subject, String topic, int numQuestions, String lectureText) {
 
         String systemPrompt = String.format(
@@ -123,57 +148,31 @@ public class AiGenerationService {
                         "  \"explanation\": \"Giải thích tại sao đáp án A đúng.\"\n" +
                         "}", numQuestions
         );
-
-        String userPrompt;
-        boolean hasFile = lectureText != null && !lectureText.isBlank();
-        boolean hasTopic = topic != null && !topic.isBlank();
-
-        if (hasFile && hasTopic) {
-            userPrompt = String.format(
-                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
-                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
-                            "VÀ MỘT CHỦ ĐỀ: '%s'. " +
-                            "HÃY LÀM THEO CÁC BƯỚC SAU: " +
-                            "1. Đọc tài liệu và xác định xem chủ đề '%s' có được đề cập rõ ràng trong tài liệu không. " +
-                            "2. NẾU KHÔNG TÌM THẤY CHỦ ĐỀ, hãy trả về một chuỗi duy nhất: 'ERROR_TOPIC_NOT_FOUND'. " +
-                            "3. NẾU TÌM THẤY CHỦ ĐỀ, hãy tạo %d câu hỏi trắc nghiệm (A, B, C, D) CHỈ DỰA TRÊN TÀI LIỆU, tập trung vào chủ đề đó.",
-                    lectureText,
-                    topic,
-                    topic,
-                    numQuestions
-            );
-        } else if (hasFile && !hasTopic) {
-            userPrompt = String.format(
-                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
-                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
-                            "Hãy đọc toàn bộ tài liệu và tạo %d câu hỏi trắc nghiệm (A, B, C, D) " +
-                            "dựa trên nội dung tổng quan của tài liệu.",
-                    lectureText,
-                    numQuestions
-            );
-        } else {
-            userPrompt = String.format(
-                    "Chủ đề quiz: %s (cho môn %s).\n" +
-                            "Phong cách học của sinh viên: %s.",
-                    (topic != null ? topic : "Tổng quan môn học"),
-                    subject.getSubjectName(),
-                    user.getLearningStyle()
-            );
-        }
+        String userPrompt = String.format(
+                "Chủ đề quiz: %s (cho môn %s).\n" +
+                        "Phong cách học của sinh viên: %s.",
+                (topic != null ? topic : "Tổng quan môn học"),
+                subject.getSubjectName(),
+                user.getLearningStyle()
+        );
 
         System.out.println("--- GỬI PROMPT TỚI GEMINI (QUIZ) bằng SDK ---");
 
         try {
+            // 1. Tạo System Instruction
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
+            // 2. Tạo Config (Ép kiểu JSON)
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
-                    .responseMimeType("application/json")
+                    .responseMimeType("application/json") // Yêu cầu JSON
                     .build();
 
+            // 3. Gọi API
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
+            // 4. Lấy text (SDK đã đảm bảo đây là JSON sạch)
             String jsonContent = response.text();
 
             if (jsonContent != null && !jsonContent.isEmpty()) {
@@ -185,6 +184,7 @@ public class AiGenerationService {
             System.err.println("Lỗi khi gọi Gemini API (Quiz) bằng SDK: " + e.getMessage());
             System.err.println("Sử dụng dữ liệu Quiz giả lập (Mock)");
 
+            // --- SỬA LỖI MOCK DATA (HẾT CRASH) ---
             String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "[ \n" +
                     "  { \n" +
@@ -194,18 +194,22 @@ public class AiGenerationService {
                     "    \"explanation\": \"Đây là dữ liệu giả lập do không thể gọi API. Lỗi: " + safeErrorMessage + "\" \n" +
                     "  } \n" +
                     "]";
+            // --- KẾT THÚC SỬA LỖI ---
         }
     }
 
 
+    /**
+     * Tạo một bộ Flashcard - Cập nhật dùng SDK (Ép kiểu JSON)
+     */
     public String generateFlashcards(User user, Subject subject, String topic, int numCards) {
         String systemPrompt = String.format(
                 "Bạn là một trợ lý học tập, chuyên tạo flashcards. Hãy tạo %d flashcard.\n" +
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
                         "Định dạng JSON cho mỗi đối tượng trong mảng phải là:\n" +
                         "{\n" +
-                        "  \"frontText\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
-                        "  \"backText\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
+                        "  \"front\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
+                        "  \"back\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
                         "}", numCards
         );
         String userPrompt = String.format(
@@ -220,16 +224,20 @@ public class AiGenerationService {
         System.out.println("--- GỬI PROMPT TỚI GEMINI (Flashcard) bằng SDK ---");
 
         try {
+            // 1. Tạo System Instruction
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
+            // 2. Tạo Config (Ép kiểu JSON)
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
-                    .responseMimeType("application/json")
+                    .responseMimeType("application/json") // Yêu cầu JSON
                     .build();
 
+            // 3. Gọi API
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
+            // 4. Lấy text (SDK đã đảm bảo đây là JSON sạch)
             String jsonContent = response.text();
 
             if (jsonContent != null && !jsonContent.isEmpty()) {
@@ -241,17 +249,22 @@ public class AiGenerationService {
             System.err.println("Lỗi khi gọi Gemini API (Flashcard) bằng SDK: " + e.getMessage());
             System.err.println("Sử dụng dữ liệu Flashcard giả lập (Mock)");
 
+            // --- SỬA LỖI MOCK DATA (HẾT CRASH) ---
             String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "[ \n" +
                     "  { \n" +
-                    "    \"frontText\": \"Flashcard giả lập (Lỗi API)\", \n" +
-                    "    \"backText\": \"Không thể tạo flashcard. Lỗi: " + safeErrorMessage + "\" \n" +
+                    "    \"front\": \"Flashcard giả lập (Lỗi API)\", \n" +
+                    "    \"back\": \"Không thể tạo flashcard. Lỗi: " + safeErrorMessage + "\" \n" +
                     "  } \n" +
                     "]";
+            // --- KẾT THÚC SỬA LỖI ---
         }
     }
 
 
+    /**
+     * Tạo Flashcard từ một phần text (chunk) - Cập nhật dùng SDK
+     */
     public List<FlashcardDTO> generateFlashcardsForChunk(String chunk, int numCards) {
 
         String systemPrompt =
@@ -263,25 +276,35 @@ public class AiGenerationService {
                         chunk;
 
         try {
+            // 1. Tạo System Instruction
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
+            // 2. Tạo Config (Ép kiểu JSON)
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
-                    .responseMimeType("application/json")
+                    .responseMimeType("application/json") // Yêu cầu JSON
                     .build();
 
+            // 3. Gọi API
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
+            // 4. Lấy text (SDK đã đảm bảo đây là JSON sạch)
             String json = response.text();
 
+            // 5. Dùng ObjectMapper để chuyển JSON string thành List<FlashcardDTO>
             return mapper.readValue(json, new TypeReference<List<FlashcardDTO>>() {});
         } catch (Exception e) {
             System.err.println("Lỗi Gemini (Chunk PDF) bằng SDK: " + e.getMessage());
+            // Trả về danh sách rỗng
             return new ArrayList<>();
         }
     }
 
+    /**
+     * Hàm này không cần sửa (vẫn giữ nguyên)
+     * Vì nó gọi đến hàm generateFlashcardsForChunk đã được sửa ở trên
+     */
     public List<FlashcardDTO> generateFlashcardsFromLargePdf(
             MultipartFile pdfFile,
             int totalCards

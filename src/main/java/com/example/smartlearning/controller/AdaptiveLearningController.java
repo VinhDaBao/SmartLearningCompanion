@@ -1,4 +1,3 @@
-// Đặt tại: src/main/java/com/example/smartlearning/controller/AdaptiveLearningController.java
 package com.example.smartlearning.controller;
 
 import com.example.smartlearning.dto.AdaptiveRecommendationDTO;

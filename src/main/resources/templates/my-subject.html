@@ -1,283 +1,396 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="subjectTitle">Mạng lưới Tri thức - Smart Learning</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="subjectTitle">Mạng lưới Tri thức - Smart Learning</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
 
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="text/javascript"
+	src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <style>
-        /* CSS Chung */
-        .list-group-item .badge { font-size: 0.9em; }
-        .markdown-body { background-color: transparent; }
+<style>
+/* CSS Chung */
+.list-group-item .badge {
+	font-size: 0.9em;
+}
 
-        /* --- STYLE CHO MẠNG LƯỚI TRI THỨC --- */
-        #knowledge-graph {
-            width: 100%;
-            height: 650px;
-            border: 1px solid #dbe6f0;
-            border-radius: 8px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-top: 15px;
-        }
+.markdown-body {
+	background-color: transparent;
+}
 
-        /* FIX: Tăng chiều cao của Accordion và thêm thanh cuộn */
-        #plansAccordion .accordion-body {
-            max-height: 500px;
-            overflow-y: auto;
-        }
+/* --- STYLE CHO MẠNG LƯỚI TRI THỨC --- */
+#knowledge-graph {
+	width: 100%;
+	height: 650px;
+	border: 1px solid #dbe6f0;
+	border-radius: 8px;
+	background-color: #ffffff;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+	margin-top: 15px;
+}
 
-        /* Style cho Modal Recommendation (Đã giữ nguyên) */
-        .adaptive-content .header { font-size: 1.1em; font-weight: bold; color: #0056b3; margin-bottom: 10px; }
-        .adaptive-content .ai-message {
-            font-size: 1em; color: #333; line-height: 1.5; margin-bottom: 15px;
-            padding: 12px; background: #f0f4f9; border-radius: 8px; border: 1px dashed #0056b3;
-        }
-        .content-card {
-            display: block; background: #ffffff; border-radius: 8px; padding: 15px;
-            text-decoration: none; color: #222; border: 1px solid #ddd;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: all 0.2s ease-in-out;
-        }
-        .content-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 50, 150, 0.15); border-color: #0056b3; }
-        .content-card .content-type { font-size: 0.8em; font-weight: bold; color: #0056b3; text-transform: uppercase; margin-bottom: 5px; }
-        .content-card .content-title { font-size: 1.1em; font-weight: bold; }
-        .content-card .content-duration { font-size: 0.9em; color: #777; margin-top: 8px; }
-        .congrats-message {
-            text-align: center; font-size: 1.1em; color: #006400; font-weight: bold;
-            padding: 15px; background: #f0fff0; border: 1px solid #006400; border-radius: 8px;
-        }
-        .modal-body-scrollable {
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-    </style>
+/* FIX: Tăng chiều cao của Accordion và thêm thanh cuộn */
+#plansAccordion .accordion-body {
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+/* Style cho Modal Recommendation (Đã giữ nguyên) */
+.adaptive-content .header {
+	font-size: 1.1em;
+	font-weight: bold;
+	color: #0056b3;
+	margin-bottom: 10px;
+}
+
+.adaptive-content .ai-message {
+	font-size: 1em;
+	color: #333;
+	line-height: 1.5;
+	margin-bottom: 15px;
+	padding: 12px;
+	background: #f0f4f9;
+	border-radius: 8px;
+	border: 1px dashed #0056b3;
+}
+
+.content-card {
+	display: block;
+	background: #ffffff;
+	border-radius: 8px;
+	padding: 15px;
+	text-decoration: none;
+	color: #222;
+	border: 1px solid #ddd;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+	transition: all 0.2s ease-in-out;
+}
+
+.content-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 6px 12px rgba(0, 50, 150, 0.15);
+	border-color: #0056b3;
+}
+
+.content-card .content-type {
+	font-size: 0.8em;
+	font-weight: bold;
+	color: #0056b3;
+	text-transform: uppercase;
+	margin-bottom: 5px;
+}
+
+.content-card .content-title {
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+.content-card .content-duration {
+	font-size: 0.9em;
+	color: #777;
+	margin-top: 8px;
+}
+
+.congrats-message {
+	text-align: center;
+	font-size: 1.1em;
+	color: #006400;
+	font-weight: bold;
+	padding: 15px;
+	background: #f0fff0;
+	border: 1px solid #006400;
+	border-radius: 8px;
+}
+
+.modal-body-scrollable {
+	max-height: 80vh;
+	overflow-y: auto;
+}
+</style>
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/dashboard"><i class="bi bi-brain-fill"></i> Smart Learning</a>
-        <div class="d-flex">
-            <a class="btn btn-outline-light me-3" href="/dashboard">
-                <i class="bi bi-arrow-left-circle"></i> Quay lại Dashboard
-            </a>
-            <button class="btn btn-outline-light" id="logoutButton"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
-        </div>
-    </div>
-</nav>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="/dashboard"><i
+				class="bi bi-brain-fill"></i> Smart Learning</a>
+			<div class="d-flex">
+				<a class="btn btn-outline-light me-3" href="/dashboard"> <i
+					class="bi bi-arrow-left-circle"></i> Quay lại Dashboard
+				</a>
+				<button class="btn btn-outline-light" id="logoutButton">
+					<i class="bi bi-box-arrow-right"></i> Đăng xuất
+				</button>
+			</div>
+		</div>
+	</nav>
 
-<div class="container mt-4">
+	<div class="container mt-4">
 
-    <div id="pageLoading" class="text-center mt-5">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <h4 class="mt-3">Đang tải nội dung môn học...</h4>
-    </div>
+		<div id="pageLoading" class="text-center mt-5">
+			<div class="spinner-border text-primary"
+				style="width: 3rem; height: 3rem;" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+			<h4 class="mt-3">Đang tải nội dung môn học...</h4>
+		</div>
 
-    <div id="mainContent" style="display: none;">
+		<div id="mainContent" style="display: none;">
 
-        <div class="row align-items-center mb-4">
-            <div class="col-md-8">
-                <h1 id="subjectName">Tên môn học...</h1>
-                <p class="lead text-muted" id="subjectDescription">Mô tả môn học...</p>
-            </div>
-            <div class="col-md-4">
-                <h5>Tiến độ của bạn</h5>
-                <div class="progress" role="progressbar" style="height: 25px;">
-                    <div id="subjectProgress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div>
-                </div>
-                <small class="text-muted mt-1">Điểm gần nhất: <strong id="currentScore">N/A</strong></small>
-            </div>
-        </div>
+			<div class="row align-items-center mb-4">
+				<div class="col-md-8">
+					<h1 id="subjectName">Tên môn học...</h1>
+					<p class="lead text-muted" id="subjectDescription">Mô tả môn
+						học...</p>
+				</div>
+				<div class="col-md-4">
+					<div class="progress" role="progressbar" style="height: 25px;">
+						<div id="subjectProgress"
+							class="progress-bar progress-bar-striped progress-bar-animated"
+							style="width: 0%">0%</div>
+					</div>
+					<small class="text-muted mt-1">Điểm gần nhất: <strong
+						id="currentScore">N/A</strong></small>
+				</div>
+			</div>
 
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-lg border-0 h-100">
-                    <div class="card-body">
-                        <h4 class="card-title mb-3"><i class="bi bi-diagram-3-fill text-info"></i> Mạng lưới Tri thức Cá nhân</h4>
-                        <p class="text-muted small">Màu sắc thể hiện mức độ thông thạo của bạn: <span class="badge bg-success">Thông thạo (>=80%)</span> | <span class="badge bg-warning">Đang học (50-79%)</span> | <span class="badge bg-danger">Yếu (<50%)</span> | <span class="badge bg-secondary">Chưa học</span>. Nhấp vào nút để nhận gợi ý!</p>
+			<div class="row">
+				<div class="col-lg-6 mb-4">
+					<div class="card shadow-lg border-0 h-100">
+						<div class="card-body">
+							<h4 class="card-title mb-3">
+								<i class="bi bi-diagram-3-fill text-info"></i> Mạng lưới Tri
+								thức Cá nhân
+							</h4>
+							<p class="text-muted small">
+								Màu sắc thể hiện mức độ thông thạo của bạn: <span
+									class="badge bg-success">Thông thạo (>=80%)</span> | <span
+									class="badge bg-warning">Đang học (50-79%)</span> | <span
+									class="badge bg-danger">Yếu (<50%)</span> | <span
+									class="badge bg-secondary">Chưa học</span>. Nhấp vào nút để
+								nhận gợi ý!
+							</p>
 
-                        <div id="knowledge-graph">
-                            <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <p class="mt-2 text-muted">Đang tải và phân tích dữ liệu quiz...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+							<div id="knowledge-graph">
+								<div
+									class="d-flex flex-column justify-content-center align-items-center h-100">
+									<div class="spinner-border text-primary" role="status"></div>
+									<p class="mt-2 text-muted">Đang tải và phân tích dữ liệu
+										quiz...</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <h4 class="card-title"><i class="bi bi-calendar-check text-primary"></i> Lộ trình học (Plans)</h4>
-                        <div class="accordion" id="plansAccordion">
-                        </div>
-                    </div>
-                </div>
-            </div>
+				<div class="col-lg-6 mb-4">
+					<div class="card shadow-sm border-0 h-100">
+						<div class="card-body">
+							<h4 class="card-title">
+								<i class="bi bi-calendar-check text-primary"></i> Lộ trình học
+								(Plans)
+							</h4>
+							<div class="accordion" id="plansAccordion"></div>
+						</div>
+					</div>
+				</div>
 
-        </div>
+			</div>
 
-        <hr class="my-4">
+			<hr class="my-4">
 
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <h4 class="card-title"><i class="bi bi-patch-question-fill text-success"></i> Bộ Quiz (Trắc nghiệm)</h4>
-                        <div class="list-group list-group-flush" id="quizList">
-                        </div>
-                        <div class="d-flex justify-content-between mt-3" id="quizListControls" style="display:none;">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleView('#quizList', 5, '#quizShowMore')">
-                                <i class="bi bi-chevron-up"></i> Ẩn bớt
-                            </button>
-                            <button id="quizShowMore" class="btn btn-sm btn-primary" onclick="toggleView('#quizList', Infinity, '#quizShowMore')">
-                                <i class="bi bi-chevron-down"></i> Xem tất cả
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <h4 class="card-title"><i class="bi bi-card-checklist text-warning"></i> Bộ Flashcard</h4>
-                        <div class="list-group list-group-flush" id="flashcardList">
-                        </div>
-                        <div class="d-flex justify-content-between mt-3" id="flashcardListControls" style="display:none;">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleView('#flashcardList', 5, '#flashcardShowMore')">
-                                <i class="bi bi-chevron-up"></i> Ẩn bớt
-                            </button>
-                            <button id="flashcardShowMore" class="btn btn-sm btn-primary" onclick="toggleView('#flashcardList', Infinity, '#flashcardShowMore')">
-                                <i class="bi bi-chevron-down"></i> Xem tất cả
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+			<div class="row">
+				<div class="col-lg-6 mb-4">
+					<div class="card shadow-sm border-0 h-100">
+						<div class="card-body">
+							<h4 class="card-title">
+								<i class="bi bi-patch-question-fill text-success"></i> Bộ Quiz
+								(Trắc nghiệm)
+							</h4>
+							<div class="list-group list-group-flush" id="quizList"></div>
+							<div class="d-flex justify-content-between mt-3"
+								id="quizListControls" style="display: none;">
+								<button class="btn btn-sm btn-outline-secondary"
+									onclick="toggleView('#quizList', 5, '#quizShowMore')">
+									<i class="bi bi-chevron-up"></i> Ẩn bớt
+								</button>
+								<button id="quizShowMore" class="btn btn-sm btn-primary"
+									onclick="toggleView('#quizList', Infinity, '#quizShowMore')">
+									<i class="bi bi-chevron-down"></i> Xem tất cả
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-lg-6 mb-4">
+					<div class="card shadow-sm border-0 h-100">
+						<div class="card-body">
+							<h4 class="card-title">
+								<i class="bi bi-card-checklist text-warning"></i> Bộ Flashcard
+							</h4>
+							<div class="list-group list-group-flush" id="flashcardList">
+							</div>
+							<div class="d-flex justify-content-between mt-3"
+								id="flashcardListControls" style="display: none;">
+								<button class="btn btn-sm btn-outline-secondary"
+									onclick="toggleView('#flashcardList', 5, '#flashcardShowMore')">
+									<i class="bi bi-chevron-up"></i> Ẩn bớt
+								</button>
+								<button id="flashcardShowMore" class="btn btn-sm btn-primary"
+									onclick="toggleView('#flashcardList', Infinity, '#flashcardShowMore')">
+									<i class="bi bi-chevron-down"></i> Xem tất cả
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<div class="modal fade" id="recommendationModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title" id="recommendationTitle"><i class="bi bi-lightbulb-fill text-warning"></i> Đề xuất Học tập</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="recommendationBody">
-            </div>
-        </div>
-    </div>
-</div>
+	<div class="modal fade" id="recommendationModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title" id="recommendationTitle">
+						<i class="bi bi-lightbulb-fill text-warning"></i> Đề xuất Học tập
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body" id="recommendationBody"></div>
+			</div>
+		</div>
+	</div>
 
-<div class="modal fade" id="planViewerModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="planViewerTitle">Lộ trình học</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body modal-body-scrollable">
-                <div class="markdown-body" id="planViewerContent">
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+	<div class="modal fade" id="planViewerModal" tabindex="-1">
+		<div class="modal-dialog modal-xl modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="planViewerTitle">Lộ trình học</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body modal-body-scrollable">
+					<div class="markdown-body" id="planViewerContent"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<div class="modal fade" id="quizModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-patch-question-fill"></i> Tạo Quiz</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="quizForm">
-                    <input type="hidden" id="quizUserSubjectId">
-                    <div class="mb-3">
-                        <label for="quizTopic" class="form-label">Chủ đề Quiz (Tùy chọn):</label>
-                        <input type="text" class="form-control" id="quizTopic"
-                               placeholder="Ví dụ: Chương 1: Giới thiệu, hoặc để trống">
-                    </div>
-                    <div class="mb-3">
-                        <label for="quizNumQuestions" class="form-label">Số lượng câu hỏi: <strong id="quizCountValue">10</strong> câu</label>
-                        <input type="range" class="form-range" id="quizNumQuestions" min="5" max="50" step="5" value="10"
-                               oninput="document.getElementById('quizCountValue').innerText = this.value">
-                    </div>
-                    <div class="mb-3">
-                        <label for="quizLectureFile" class="form-label">
-                            Tải file bài giảng để tạo câu hỏi (tuỳ chọn)
-                        </label>
-                        <input class="form-control" type="file" id="quizLectureFile"
-                               accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">
-                        <div class="form-text">
-                            Nên chọn đúng slide / chương bạn muốn tạo Quiz để câu hỏi sát nội dung nhất.
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-success" id="submitQuizButton">
-                    <i class="bi bi-magic"></i> Tạo Quiz
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+	<div class="modal fade" id="quizModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">
+						<i class="bi bi-patch-question-fill"></i> Tạo Quiz
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<form id="quizForm">
+						<input type="hidden" id="quizUserSubjectId">
+						<div class="mb-3">
+							<label for="quizTopic" class="form-label">Chủ đề Quiz
+								(Tùy chọn):</label> <input type="text" class="form-control"
+								id="quizTopic"
+								placeholder="Ví dụ: Chương 1: Giới thiệu, hoặc để trống">
+						</div>
+						<div class="mb-3">
+							<label for="quizNumQuestions" class="form-label">Số lượng
+								câu hỏi: <strong id="quizCountValue">10</strong> câu
+							</label> <input type="range" class="form-range" id="quizNumQuestions"
+								min="5" max="50" step="5" value="10"
+								oninput="document.getElementById('quizCountValue').innerText = this.value">
+						</div>
+						<div class="mb-3">
+							<label for="quizLectureFile" class="form-label"> Tải file
+								bài giảng để tạo câu hỏi (tuỳ chọn) </label> <input class="form-control"
+								type="file" id="quizLectureFile"
+								accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">
+							<div class="form-text">Nên chọn đúng slide / chương bạn
+								muốn tạo Quiz để câu hỏi sát nội dung nhất.</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">Đóng</button>
+					<button type="button" class="btn btn-success" id="submitQuizButton">
+						<i class="bi bi-magic"></i> Tạo Quiz
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<div class="modal fade" id="flashcardModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-card-checklist"></i> Tạo Flashcard</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="flashcardForm">
-                    <input type="hidden" id="flashcardUserSubjectId">
-                    <div class="mb-3">
-                        <label for="flashcardTitle" class="form-label">Tiêu đề bộ Flashcard:</label>
-                        <input type="text" class="form-control" id="flashcardTitle" required placeholder="Ví dụ: Các thuật ngữ Spring Boot">
-                    </div>
-                    <div class="mb-3">
-                        <label for="flashcardTopic" class="form-label">Chủ đề (Tùy chọn):</label>
-                        <input type="text" class="form-control" id="flashcardTopic" placeholder="Ví dụ: Annotations, hoặc để trống">
-                    </div>
-                    <div class="mb-3">
-                        <label for="flashcardNumCards" class="form-label">Số lượng thẻ: <strong id="flashcardCountValue">10</strong> thẻ</label>
-                        <input type="range" class="form-range" id="flashcardNumCards" min="10" max="50" step="5" value="10"
-                               oninput="document.getElementById('flashcardCountValue').innerText = this.value">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-warning" id="submitFlashcardButton">
-                    <i class="bi bi-magic"></i> Tạo Flashcard
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+	<div class="modal fade" id="flashcardModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">
+						<i class="bi bi-card-checklist"></i> Tạo Flashcard
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<form id="flashcardForm">
+						<input type="hidden" id="flashcardUserSubjectId">
+						<div class="mb-3">
+							<label for="flashcardTitle" class="form-label">Tiêu đề bộ
+								Flashcard:</label> <input type="text" class="form-control"
+								id="flashcardTitle" required
+								placeholder="Ví dụ: Các thuật ngữ Spring Boot">
+						</div>
+						<div class="mb-3">
+							<label for="flashcardTopic" class="form-label">Chủ đề
+								(Tùy chọn):</label> <input type="text" class="form-control"
+								id="flashcardTopic"
+								placeholder="Ví dụ: Annotations, hoặc để trống">
+						</div>
+						<div class="mb-3">
+							<label for="flashcardNumCards" class="form-label">Số
+								lượng thẻ: <strong id="flashcardCountValue">10</strong> thẻ
+							</label> <input type="range" class="form-range" id="flashcardNumCards"
+								min="10" max="50" step="5" value="10"
+								oninput="document.getElementById('flashcardCountValue').innerText = this.value">
+						</div>
+
+						<div class="mb-3">
+							<label for="flashcardLectureFile" class="form-label"> Tải
+								file bài giảng (tuỳ chọn) </label> <input class="form-control"
+								type="file" id="flashcardLectureFile"
+								accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">
+							<div class="form-text">Nên chọn đúng slide / chương bạn
+								muốn tạo Flashcard.</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">Đóng</button>
+					<button type="button" class="btn btn-warning"
+						id="submitFlashcardButton">
+						<i class="bi bi-magic"></i> Tạo Flashcard
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script>
     // Khai báo biến global
     let USER_SUBJECT_ID = null;
     let recommendationModal = null;
@@ -319,6 +432,7 @@
      * HÀM XEM LỘ TRÌNH FULLSCREEN (MỚI)
      */
     function showPlanFullscreen(planTitle, planContent) {
+    	console.log(planTitle);
         $("#planViewerTitle").text(planTitle);
         $("#planViewerContent").html(marked.parse(planContent || "Nội dung trống..."));
         planViewerModal.show();
@@ -374,13 +488,17 @@
 
     function renderLists(data) {
         const LIST_LIMIT = 5;
-
+	
          // 2. Render Lộ trình (Study Plans) - ĐÃ THÊM NÚT FULLSCREEN
+        const studyPlansMap = {};
+
         const plansAccordion = $("#plansAccordion"); plansAccordion.empty();
         if (data.studyPlans && data.studyPlans.length > 0) {
             data.studyPlans.forEach((plan, index) => {
                 const planContent = plan.planContent || "Nội dung trống...";
                 const planTitle = `Lộ trình #${plan.studyPlanId}`;
+                studyPlansMap[plan.studyPlanId] = planContent;
+
                 const escapedContent = planContent.replace(/`/g, '\\`');
 
                 const planItem = `
@@ -389,8 +507,9 @@
                              <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${plan.studyPlanId}">
                                 ${planTitle} (Tạo lúc: ${new Date(plan.generatedAt).toLocaleString('vi-VN')})
                             </button>
-                            <button class="btn btn-sm btn-outline-primary me-2"
-                                onclick="showPlanFullscreen('${planTitle}', \`${escapedContent}\`)">
+                                <button class="btn btn-sm btn-outline-primary me-2"
+                                    data-plan-id="${plan.studyPlanId}"
+                                    data-plan-title="Lộ trình #${plan.studyPlanId}">
                                 <i class="bi bi-arrows-fullscreen"></i>
                             </button>
                         </h2>
@@ -404,6 +523,12 @@
                 plansAccordion.append(planItem);
             });
         } else { plansAccordion.html('<p class="text-muted">Chưa có lộ trình nào. Hãy quay lại Dashboard để tạo!</p>'); }
+        $("#plansAccordion").on('click', 'button[data-plan-id]', function() {
+            const planId = $(this).data('plan-id');
+            const planTitle = $(this).data('plan-title');
+            const planContent = studyPlansMap[planId];
+            showPlanFullscreen(planTitle, planContent);
+        });
 
         // 3. Render Quiz - ĐÃ THÊM THỐNG KÊ VÀ PHÂN TRANG
         const quizList = $("#quizList"); quizList.empty();
@@ -629,6 +754,63 @@
         }
         containerElement.html(html);
     }
+    $("#submitFlashcardButton").on("click", function(e) {
+    e.preventDefault();
+    const $btn = $(this);
+    const $form = $("#flashcardForm");
+
+    // 0. Lấy tiêu đề (bắt buộc)
+    const title = $("#flashcardTitle").val();
+    if (!title) {
+        alert("Vui lòng nhập Tiêu đề cho bộ flashcard.");
+        return;
+    }
+
+    // 1. Lấy file
+    const fileInput = document.getElementById('flashcardLectureFile');
+    const file = (fileInput && fileInput.files.length > 0) ? fileInput.files[0] : null;
+
+    // 2. Chuẩn bị dữ liệu JSON
+    const requestData = {
+        userSubjectId: parseInt(USER_SUBJECT_ID, 10),
+        title: title,
+        topic: $("#flashcardTopic").val() || null,
+        numberOfCards: parseInt($("#flashcardNumCards").val(), 10)
+    };
+   
+    // 3. Tạo FormData (vì có file đính kèm)
+    const formData = new FormData();
+    formData.append("request", new Blob([JSON.stringify(requestData)], {
+        type: "application/json"
+    }));
+
+    if (file) {
+        formData.append("lectureFile", file);
+    }
+
+
+    // 4. Gửi AJAX
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang tạo...');
+
+    $.ajax({
+        type: "POST",
+        url: "http://localhost:8080/api/flashcards/generate", // API này sẽ được cập nhật
+        data: formData,
+        processData: false, // Bắt buộc
+        contentType: false, // Bắt buộc
+        // (Không cần header Authorization vì $.ajaxSetup đã lo)
+        success: function(newSet) {
+            alert(`Tạo thành công bộ flashcard: ${newSet.title}`);
+            // Đóng modal và tải lại trang
+            bootstrap.Modal.getInstance($("#flashcardModal")).hide();
+            location.reload();
+        },
+        error: function(xhr) {
+            alert("Lỗi khi tạo flashcard: " + (xhr.responseJSON?.message || xhr.responseText));
+            $btn.prop('disabled', false).html('<i class="bi bi-magic"></i> Tạo Flashcard');
+        }
+    });
+});
 </script>
 </body>
 </html>

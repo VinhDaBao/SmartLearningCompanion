@@ -45,4 +45,7 @@ public interface UserQuestionAnswerRepository extends JpaRepository<UserQuestion
             "AND qq.topic.topicId IS NOT NULL " +
             "GROUP BY qq.topic.topicId")
     List<TopicMasteryDTO> getMasteryScoresForUserSubject(@Param("userSubjectId") Integer userSubjectId);
+    
+    @Query("SELECT COUNT(uqa) FROM UserQuestionAnswer uqa WHERE uqa.attempt.attemptId = :attemptId AND uqa.isCorrect = false")
+    int countIncorrectByAttemptId(Integer attemptId);
 }

@@ -2,6 +2,7 @@ package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.QuestionFeedbackDTO;
 import com.example.smartlearning.dto.QuizDetailDTO;
+import com.example.smartlearning.dto.QuizInfoDTO;
 import com.example.smartlearning.dto.QuizQuestionDetailDTO;
 import com.example.smartlearning.dto.QuizRequestDTO;
 import com.example.smartlearning.dto.SubmitQuizRequestDTO;
@@ -291,5 +292,25 @@ public class QuizService {
             userSubject.setCurrentScore(averageScore);
         }
         userSubjectRepository.save(userSubject);
+    }
+    
+    public void createQuizDTO(QuizInfoDTO quiz, UserSubject usersubject)
+    {
+        List<QuizQuestions> questions = quizQuestionsRepository.findByQuiz_QuizId(quiz.getQuizId());
+        Quiz Q = quizRepository.findById(quiz.getQuizId()).orElse(null);
+        
+        int totalQuestions = questions.size();
+        quiz.setQuestionCount(totalQuestions);
+        UserQuizAttempt lastAttempt = attemptRepository
+        	    .findTopByUserSubject_IdAndQuiz_QuizIdOrderByAttemptTimeDesc(
+        	        usersubject.getId(), quiz.getQuizId()
+        	    )
+        	    .orElse(null);
+
+        	if (lastAttempt != null) {
+        	    quiz.setLastAttemptScore(lastAttempt.getScore());
+        	    quiz.setIncorrectCount(answerRepository.countIncorrectByAttemptId(lastAttempt.getAttemptId()));
+        	}        
+        
     }
 }

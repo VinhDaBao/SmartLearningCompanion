@@ -97,9 +97,7 @@ public class LearningLogService {
         return dashboardData;
     }
 
-
     private Map<String, Integer> getStudyTimeData(Integer userId, String filterType, LocalDate filterDate) {
-        // (Hàm này giữ nguyên)
         Map<String, Integer> data = new LinkedHashMap<>();
         DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("dd/MM");
         DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MM/yyyy");
@@ -119,6 +117,7 @@ public class LearningLogService {
                 YearMonth yearMonth = YearMonth.from(filterDate);
                 LocalDate firstDay = filterDate.withDayOfMonth(1);
                 LocalDate lastDay = filterDate.withDayOfMonth(yearMonth.lengthOfMonth());
+
                 Map<LocalDate, Integer> monthlyLogs = learningLogRepository.findByUserUserIdAndLogTimeBetween(userId, firstDay.atStartOfDay(), lastDay.atTime(LocalTime.MAX))
                         .stream()
                         .filter(log -> log.getDurationMinutes() != null && log.getDurationMinutes() > 0)
@@ -146,7 +145,6 @@ public class LearningLogService {
     }
 
     private String getDailyStudyComparison(Integer userId) {
-        // (Hàm này giữ nguyên)
         LocalDate today = LocalDate.now();
         LocalDateTime startOfToday = today.atStartOfDay();
         LocalDateTime endOfToday = today.atTime(LocalTime.MAX);

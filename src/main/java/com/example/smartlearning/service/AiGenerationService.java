@@ -1,4 +1,3 @@
-// Đặt tại: src/main/java/com/example/smartlearning/service/AiGenerationService.java
 package com.example.smartlearning.service;
 
 import com.google.genai.Client;
@@ -193,10 +192,8 @@ public class AiGenerationService {
         }
     }
 
-    // =================================================================
-    // === HÀM NÀY ĐÃ ĐƯỢC SỬA (THÊM lectureText) ===
-    // =================================================================
-    public String generateFlashcards(User user, Subject subject, String topic, int numCards, String lectureText) {
+
+    public String generateFlashcards(User user, Subject subject, String topic, int numCards) {
         String systemPrompt = String.format(
                 "Bạn là một trợ lý học tập, chuyên tạo flashcards. Hãy tạo %d flashcard.\n" +
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
@@ -267,9 +264,6 @@ public class AiGenerationService {
                     "]";
         }
     }
-    // =================================================================
-    // === KẾT THÚC PHẦN SỬA ===
-    // =================================================================
 
     public VideoSuggestionDTO googleSearchAndSuggestVideo(String topic) {
         System.out.println("--- GỢI Ý VIDEO YOUTUBE CHO: " + topic + " ---");

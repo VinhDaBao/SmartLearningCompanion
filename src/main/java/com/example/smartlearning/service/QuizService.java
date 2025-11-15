@@ -2,6 +2,7 @@ package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.QuestionFeedbackDTO;
 import com.example.smartlearning.dto.QuizDetailDTO;
+import com.example.smartlearning.dto.QuizInfoDTO;
 import com.example.smartlearning.dto.QuizQuestionDetailDTO;
 import com.example.smartlearning.dto.QuizRequestDTO;
 import com.example.smartlearning.dto.SubmitQuizRequestDTO;
@@ -240,13 +241,24 @@ public class QuizService {
             uqa.setSelectedAnswer(selectedAnswer);
             uqa.setCorrect(isCorrect);
             userAnswersToSave.add(uqa);
-
+            System.out.println(isCorrect);
             feedbackList.add(new QuestionFeedbackDTO(qId, selectedAnswer, correctAnswer, isCorrect, explanation));
         }
 
         answerRepository.saveAll(userAnswersToSave);
 
         double finalScore = (totalQuestions > 0) ? ((double) correctCount / totalQuestions) * 10 : 0;
+        if (totalQuestions > 0) {
+            double passPercentage = (double) finalScore / totalQuestions;
+
+            if (passPercentage >= 0.5) {
+                int currentProgress = userSubject.getProgressPercentage();
+                int newProgress = Math.min(currentProgress + 10, 100);
+
+                userSubject.setProgressPercentage(newProgress);
+                userSubjectRepository.save(userSubject);
+            }
+        }
         savedAttempt.setScore(finalScore);
         attemptRepository.save(savedAttempt);
 
@@ -279,5 +291,25 @@ public class QuizService {
             userSubject.setCurrentScore(averageScore);
         }
         userSubjectRepository.save(userSubject);
+    }
+
+    public void createQuizDTO(QuizInfoDTO quiz, UserSubject usersubject)
+    {
+        List<QuizQuestions> questions = quizQuestionsRepository.findByQuiz_QuizId(quiz.getQuizId());
+        Quiz Q = quizRepository.findById(quiz.getQuizId()).orElse(null);
+
+        int totalQuestions = questions.size();
+        quiz.setQuestionCount(totalQuestions);
+        UserQuizAttempt lastAttempt = attemptRepository
+        	    .findTopByUserSubject_IdAndQuiz_QuizIdOrderByAttemptTimeDesc(
+        	        usersubject.getId(), quiz.getQuizId()
+        	    )
+        	    .orElse(null);
+
+        	if (lastAttempt != null) {
+        	    quiz.setLastAttemptScore(lastAttempt.getScore());
+        	    quiz.setIncorrectCount(answerRepository.countIncorrectByAttemptId(lastAttempt.getAttemptId()));
+        	}
+
     }
 }

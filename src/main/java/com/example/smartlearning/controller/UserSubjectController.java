@@ -2,14 +2,18 @@
 package com.example.smartlearning.controller;
 
 import com.example.smartlearning.dto.EnrollRequestDTO;
+import com.example.smartlearning.dto.QuizDTO;
+import com.example.smartlearning.dto.QuizInfoDTO;
 import com.example.smartlearning.dto.SubjectDTO;
 import com.example.smartlearning.dto.UserSubjectDTO;
 import com.example.smartlearning.model.UserSubject;
+import com.example.smartlearning.service.QuizService;
 import com.example.smartlearning.service.UserSubjectService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.web.bind.annotation.*; // Đảm bảo đã import đủ
 
 import java.util.List;
@@ -19,11 +23,20 @@ import java.util.stream.Collectors;
 @RequestMapping("/api") // Dùng chung /api
 public class UserSubjectController {
 
+    private final AuthenticationProvider authenticationProvider;
+
+    @Autowired
+    private QuizService quizService;
+
     @Autowired
     private UserSubjectService userSubjectService;
 
     @Autowired
     private ModelMapper modelMapper;
+
+    UserSubjectController(QuizService quizService, AuthenticationProvider authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+    }
 
     /**
      * API Lấy chi tiết MỘT môn học user đã đăng ký
@@ -43,6 +56,9 @@ public class UserSubjectController {
         // (ModelMapper sẽ tự động map các list con nếu DTO của bạn
         // được định nghĩa để chứa các list đó)
         UserSubjectDTO dto = modelMapper.map(userSubject, UserSubjectDTO.class);
+        for (QuizInfoDTO quiz : dto.getQuizzes()) {
+        	quizService.createQuizDTO(quiz, userSubject);
+        }
 
         // 3. Trả về cho frontend
         return ResponseEntity.ok(dto);

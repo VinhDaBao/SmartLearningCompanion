@@ -69,8 +69,6 @@
             border-radius: 0.5rem;
         }
 
-        /* (Xóa CSS của srsMilestones khỏi đây) */
-
         @media (max-width: 768px) {
             .subject-card {
                 flex-direction: column;
@@ -147,10 +145,18 @@
                     <div class="col-6">
                         <label for="filterMonth" class="form-label">Chọn tháng:</label>
                         <select id="filterMonth" name="month" class="form-select">
-                            <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
-                            <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
-                            <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
-                            <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+                            <option value="1">Tháng 1</option>
+                            <option value="2">Tháng 2</option>
+                            <option value="3">Tháng 3</option>
+                            <option value="4">Tháng 4</option>
+                            <option value="5">Tháng 5</option>
+                            <option value="6">Tháng 6</option>
+                            <option value="7">Tháng 7</option>
+                            <option value="8">Tháng 8</option>
+                            <option value="9">Tháng 9</option>
+                            <option value="10">Tháng 10</option>
+                            <option value="11">Tháng 11</option>
+                            <option value="12">Tháng 12</option>
                         </select>
                     </div>
                     <div class="col-6">
@@ -524,11 +530,18 @@
         $("#submitQuizButton").on("click", handleGenerateQuiz);
         $("#submitFlashcardButton").on("click", handleGenerateFlashcard);
         $("#submitLogButton").on("click", handleLogSession);
-        $("#videoForm").on("submit", function(e) { e.preventDefault(); handleVideoSearch(); });
+
+        $("#videoForm").on("submit", function(e) {
+            e.preventDefault();
+            handleVideoSearch();
+        });
+
         $("#createSubjectButton").on("click", handleCreateSubject);
         $("#filterForm").on("submit", function(e) {
             e.preventDefault();
-            if (currentUserId) { loadDashboardData(currentUserId); }
+            if (currentUserId) {
+                loadDashboardData(currentUserId);
+            }
         });
         $("#filterType").on("change", handleFilterTypeChange);
     });
@@ -558,11 +571,15 @@
         $("#filterGroupWeek").hide();
         $("#filterGroupMonth").hide();
         $("#filterGroupYear").hide();
-        if (filterType === 'week') { $("#filterGroupWeek").show(); }
-        else if (filterType === 'month') { $("#filterGroupMonth").show(); }
-        else if (filterType === 'year') { $("#filterGroupYear").show(); }
-    }
 
+        if (filterType === 'week') {
+            $("#filterGroupWeek").show();
+        } else if (filterType === 'month') {
+            $("#filterGroupMonth").show();
+        } else if (filterType === 'year') {
+            $("#filterGroupYear").show();
+        }
+    }
 
     function loadUserData(username) {
         $.ajax({
@@ -586,6 +603,7 @@
         $("#activityChart").hide();
         $("#timeChartLoading").show();
         $("#activityChartLoading").show();
+        $("#studyNotification").empty();
 
         const notificationBadge = $("#notificationBadge");
         const notificationMenu = $("#notificationDropdownMenu");
@@ -596,8 +614,10 @@
 
         const filterType = $("#filterType").val();
         let filterDate;
-        if (filterType === 'week') { filterDate = $("#filterDate").val(); }
-        else if (filterType === 'month') {
+
+        if (filterType === 'week') {
+            filterDate = $("#filterDate").val();
+        } else if (filterType === 'month') {
             const year = $("#filterYearMonth").val();
             const month = $("#filterMonth").val().padStart(2, '0');
             filterDate = `${year}-${month}-01`;
@@ -609,7 +629,10 @@
         $.ajax({
             type: "GET",
             url: `http://localhost:8080/api/dashboard/${userId}`,
-            data: { filterType: filterType, filterDate: filterDate },
+            data: {
+                filterType: filterType,
+                filterDate: filterDate
+            },
             success: function(data) {
                 renderTimeChart(data.timeLabels || [], data.timeData || []);
                 renderActivityChart(data.activityCounts || {});
@@ -694,17 +717,34 @@
                                     </p>
                                 </div>
                                 <div class="subject-actions">
-                                    <button class="btn btn-outline-danger" onclick="openVideoModal('${us.subject.subjectName}')"><i class="bi bi-youtube me-1"></i> Video</button>
-                                    <button class="btn btn-outline-info" onclick="viewSubjectContent(${us.id})"><i class="bi bi-book me-1"></i> Học</button>
-                                    <button class="btn btn-outline-primary" onclick="openPlanModal(${us.id})"><i class="bi bi-calendar-check me-1"></i> Plan</button>
-                                    <button class="btn btn-outline-success" onclick="openQuizModal(${us.id})"><i class="bi bi-patch-question me-1"></i> Quiz</button>
-                                    <button class="btn btn-outline-warning" onclick="openFlashcardModal(${us.id})"><i class="bi bi-card-checklist me-1"></i> Flashcard</button>
+                                    <button class="btn btn-outline-danger"
+                                            onclick="openVideoModal('${us.subject.subjectName}')">
+                                        <i class="bi bi-youtube me-1"></i> Video
+                                    </button>
+                                    <button class="btn btn-outline-info"
+                                            onclick="viewSubjectContent(${us.id})">
+                                        <i class="bi bi-book me-1"></i> Học
+                                    </button>
+                                    <button class="btn btn-outline-primary"
+                                            onclick="openPlanModal(${us.id})">
+                                        <i class="bi bi-calendar-check me-1"></i> Plan
+                                    </button>
+                                    <button class="btn btn-outline-success"
+                                            onclick="openQuizModal(${us.id})">
+                                        <i class="bi bi-patch-question me-1"></i> Quiz
+                                    </button>
+                                    <button class="btn btn-outline-warning"
+                                            onclick="openFlashcardModal(${us.id})">
+                                        <i class="bi bi-card-checklist me-1"></i> Flashcard
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     `;
                     mySubjectsListDiv.append(cardHtml);
-                    logSubjectSelect.append(`<option value="${us.id}">${us.subject.subjectName}</option>`);
+                    logSubjectSelect.append(
+                        `<option value="${us.id}">${us.subject.subjectName}</option>`
+                    );
                 });
             }
             const allSubjects = await $.ajax({ url: "http://localhost:8080/api/subjects" });
@@ -720,7 +760,10 @@
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div class="card shadow-sm border-0 h-100">
                                 <div class="card-body d-flex flex-column">
-                                    <div>${categoryBadge} <h5 class="card-title">${subject.subjectName}</h5></div>
+                                    <div>
+                                        ${categoryBadge}
+                                        <h5 class="card-title">${subject.subjectName}</h5>
+                                    </div>
                                     <p class="card-text text-muted">${description}</p>
                                     <div class="mt-auto">
                                         <button class="btn btn-outline-primary w-100" id="enrollBtn-${subject.subjectId}" onclick="enroll(${subject.subjectId})">
@@ -735,7 +778,11 @@
                     exploreSubjectsListDiv.append(cardHtml);
                 }
             });
-            if (exploreCount === 0) { exploreSubjectsListDiv.append('<div class="col-12"><p class="text-muted">Bạn đã đăng ký tất cả các môn học!</p></div>'); }
+
+            if (exploreCount === 0) {
+                exploreSubjectsListDiv.append('<div class="col-12"><p class="text-muted">Bạn đã đăng ký tất cả các môn học!</p></div>');
+            }
+
         } catch (xhr) {
             console.error("Lỗi khi tải môn học:", xhr.responseText);
             mySubjectsListDiv.html('<div class="alert alert-danger">Không thể tải danh sách môn học.</div>');
@@ -748,7 +795,9 @@
     function enroll(subjectId) {
         const btn = $(`#enrollBtn-${subjectId}`);
         const spinner = $(`#enrollSpinner-${subjectId}`);
-        btn.prop('disabled', true); spinner.show();
+        btn.prop('disabled', true);
+        spinner.show();
+
         $.ajax({
             type: "POST", url: "http://localhost:8080/api/enroll",
             contentType: "application/json",
@@ -759,7 +808,8 @@
             },
             error: function(xhr) {
                 showToast("Lỗi: " + xhr.responseText, "error");
-                btn.prop('disabled', false); spinner.hide();
+                btn.prop('disabled', false);
+                spinner.hide();
             }
         });
     }
@@ -796,57 +846,83 @@
     function handleGeneratePlan() {
         const btn = $("#submitPlanButton");
         const spinner = btn.find(".loading-spinner");
-        btn.prop('disabled', true); spinner.show();
+        btn.prop('disabled', true);
+        spinner.show();
         $("#planResult").hide().empty();
         const requestObj = {
             userSubjectId: $("#planUserSubjectId").val(),
             customPrompt: $("#customPrompt").val()
         };
         const formData = new FormData();
-        formData.append("request", new Blob([JSON.stringify(requestObj)], { type: "application/json" }));
+        formData.append(
+            "request",
+            new Blob([JSON.stringify(requestObj)], { type: "application/json" })
+        );
+
         const fileInput = $("#planLectureFile")[0];
         if (fileInput.files && fileInput.files[0]) {
             formData.append("lectureFile", fileInput.files[0]);
         }
         $.ajax({
-            type: "POST", url: "http://localhost:8080/api/study-plans/generate",
-            data: formData, processData: false, contentType: false,
+            type: "POST",
+            url: "http://localhost:8080/api/study-plans/generate",
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(planDTO) {
                 $("#planResult").text(planDTO.planContent).show();
                 showToast("Tạo lộ trình thành công!");
                 loadDashboardData(currentUserId);
             },
-            error: function(xhr) { $("#planResult").text("Lỗi: " + xhr.responseText).show(); },
-            complete: function() { btn.prop('disabled', false); spinner.hide(); }
+            error: function(xhr) {
+                $("#planResult").text("Lỗi: " + xhr.responseText).show();
+            },
+            complete: function() {
+                btn.prop('disabled', false);
+                spinner.hide();
+            }
         });
     }
 
     function handleGenerateQuiz() {
         const btn = $("#submitQuizButton");
         const spinner = btn.find(".loading-spinner");
-        btn.prop('disabled', true); spinner.show();
+        btn.prop('disabled', true);
+        spinner.show();
+
         const requestObj = {
             userSubjectId: $("#quizUserSubjectId").val(),
             topic: $("#quizTopic").val() || null,
             numberOfQuestions: $("#quizNumQuestions").val()
         };
         const formData = new FormData();
-        formData.append("request", new Blob([JSON.stringify(requestObj)], { type: "application/json" }));
+        formData.append(
+            "request",
+            new Blob([JSON.stringify(requestObj)], { type: "application/json" })
+        );
+
         const fileInput = $("#quizLectureFile")[0];
         if (fileInput.files && fileInput.files[0]) {
             formData.append("lectureFile", fileInput.files[0]);
         }
         $.ajax({
-            type: "POST", url: "http://localhost:8080/api/quizzes/generate",
-            data: formData, processData: false, contentType: false,
+            type: "POST",
+            url: "http://localhost:8080/api/quizzes/generate",
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(quizDTO) {
                 showToast(`Tạo Quiz thành công! Chuẩn bị làm bài...`);
                 loadDashboardData(currentUserId);
-                setTimeout(function() { window.location.href = "/quiz/" + quizDTO.quizId; }, 1000);
+
+                setTimeout(function() {
+                    window.location.href = "/quiz/" + quizDTO.quizId;
+                }, 1000);
             },
             error: function(xhr) {
                 alert("Lỗi tạo Quiz: " + xhr.responseText);
-                btn.prop('disabled', false); spinner.hide();
+                btn.prop('disabled', false);
+                spinner.hide();
             }
         });
     }
@@ -884,8 +960,9 @@
                 }, 1000);
             },
             error: function(xhr) {
-                alert("Lỗi khi tạo Flashcard: " + (xhr.responseJSON?.message || xhr.responseText));
-                btn.prop('disabled', false); spinner.hide();
+                alert("Lỗi tạo Flashcard: " + xhr.responseText);
+                btn.prop('disabled', false);
+                spinner.hide();
             }
         });
     }
@@ -905,16 +982,22 @@
         }
         btn.prop('disabled', true); spinner.show();
         $.ajax({
-            type: "POST", url: "http://localhost:8080/api/log/session",
-            contentType: "application/json", data: JSON.stringify(logData),
+            type: "POST",
+            url: "http://localhost:8080/api/log/session",
+            contentType: "application/json",
+            data: JSON.stringify(logData),
             success: function() {
                 showToast("Ghi lại thời gian học thành công!");
                 logSessionModal.hide();
                 $("#logSessionForm")[0].reset();
                 loadDashboardData(currentUserId);
             },
-            error: function(xhr) { alert("Lỗi khi log: " + xhr.responseText); },
-            complete: function() { btn.prop('disabled', false); spinner.hide(); }
+            error: function(xhr) {
+                alert("Lỗi khi log: " + xhr.responseText);
+            },
+            complete: function() {
+                btn.prop('disabled', false); spinner.hide();
+            }
         });
     }
     function handleVideoSearch() {
@@ -922,11 +1005,17 @@
         const spinner = btn.find(".loading-spinner");
         const topic = $("#videoTopic").val();
         const resultDiv = $("#videoResult");
-        if (!topic) { alert("Vui lòng nhập chủ đề!"); return; }
+
+        if (!topic) {
+            alert("Vui lòng nhập chủ đề!");
+            return;
+        }
+
         btn.prop('disabled', true); spinner.show();
         resultDiv.html('<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
         $.ajax({
-            type: "GET", url: `http://localhost:8080/api/ai/suggest-video`,
+            type: "GET",
+            url: `http://localhost:8080/api/ai/suggest-video`,
             data: { topic: topic },
             success: function(data) {
                 if (data && data.embedUrl) {
@@ -941,28 +1030,54 @@
                     resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');
                 }
             },
-            error: function(xhr) { resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`); },
-            complete: function() { btn.prop('disabled', false); spinner.hide(); }
+            error: function(xhr) {
+                resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`);
+            },
+            complete: function() {
+                btn.prop('disabled', false); spinner.hide();
+            }
         });
     }
-    function normalizeSubjectName(name) { return name.trim().toLowerCase(); }
+
+    function normalizeSubjectName(name) {
+        return name.trim().toLowerCase();
+    }
+
     function handleCreateSubject() {
         const btn = $("#createSubjectButton");
         const spinner = btn.find(".loading-spinner");
         const name = $("#newSubjectName").val().trim();
         const category = $("#newSubjectCategory").val().trim();
         const description = $("#newSubjectDescription").val().trim();
-        if (!name) { alert("Vui lòng nhập tên môn học."); return; }
-        const existsInCache = allSubjectsCache.some(s => normalizeSubjectName(s.subjectName || "") === normalizeSubjectName(name));
+
+        if (!name) {
+            alert("Vui lòng nhập tên môn học.");
+            return;
+        }
+
+        const existsInCache = allSubjectsCache.some(s =>
+            normalizeSubjectName(s.subjectName || "") === normalizeSubjectName(name)
+        );
+
         if (existsInCache) {
             showToast("Môn học này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.", "error");
             return;
         }
-        const payload = { subjectName: name, subjectCategory: category || null, description: description || null };
-        btn.prop("disabled", true); spinner.show();
+
+        const payload = {
+            subjectName: name,
+            subjectCategory: category || null,
+            description: description || null
+        };
+
+        btn.prop("disabled", true);
+        spinner.show();
+
         $.ajax({
-            type: "POST", url: "http://localhost:8080/api/subjects",
-            contentType: "application/json", data: JSON.stringify(payload),
+            type: "POST",
+            url: "http://localhost:8080/api/subjects",
+            contentType: "application/json",
+            data: JSON.stringify(payload),
             success: function(newSubject) {
                 showToast("Tạo môn học mới thành công!");
                 $("#createSubjectForm")[0].reset();
@@ -970,14 +1085,22 @@
                 loadSubjectsAndEnrollments(currentUserId);
             },
             error: function(xhr) {
-                if (xhr.status === 409) { showToast(xhr.responseText || "Môn học đã tồn tại trong cơ sở dữ liệu.", "error"); }
-                else { showToast("Lỗi khi tạo môn học: " + (xhr.responseText || "Không rõ lỗi"), "error"); }
+                if (xhr.status === 409) {
+                    showToast(xhr.responseText || "Môn học đã tồn tại trong cơ sở dữ liệu.", "error");
+                } else {
+                    showToast("Lỗi khi tạo môn học: " + (xhr.responseText || "Không rõ lỗi"), "error");
+                }
             },
-            complete: function() { btn.prop("disabled", false); spinner.hide(); }
+            complete: function() {
+                btn.prop("disabled", false);
+                spinner.hide();
+            }
         });
     }
     function renderTimeChart(labels, data) {
-        if (timeChartInstance) { timeChartInstance.destroy(); }
+        if (timeChartInstance) {
+            timeChartInstance.destroy();
+        }
         const ctx = document.getElementById('timeChart').getContext('2d');
         timeChartInstance = new Chart(ctx, {
             type: 'bar',
@@ -991,40 +1114,65 @@
                     categoryPercentage: 0.8
                 }]
             },
-            options: { scales: { y: { beginAtZero: true } }, responsive: true }
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true
+            }
         });
     }
     function renderActivityChart(activityData) {
         if(activityChartInstance) activityChartInstance.destroy();
         const activityLabels = {
-            "FLASHCARD_GENERATED": "Tạo Flashcard", "QUIZ_GENERATED": "Tạo Quiz",
-            "QUIZ_COMPLETED": "Làm Quiz", "PLAN_GENERATED": "Tạo Kế hoạch",
-            "STUDY_SESSION": "Phiên học", "DEFAULT": "Hoạt động khác"
+            "FLASHCARD_GENERATED": "Tạo Flashcard",
+            "QUIZ_GENERATED": "Tạo Quiz",
+            "QUIZ_COMPLETED": "Làm Quiz",
+            "PLAN_GENERATED": "Tạo Kế hoạch",
+            "STUDY_SESSION": "Phiên học",
+            "DEFAULT": "Hoạt động khác"
         };
         const translatedLabels = Object.keys(activityData).map(key => activityLabels[key] || activityLabels["DEFAULT"]);
         const values = Object.values(activityData);
         const backgroundColors = [
-            'rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)',
-            'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)',
+            'rgba(0, 123, 255, 0.7)',
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(220, 53, 69, 0.7)',
             'rgba(108, 117, 125, 0.7)'
         ];
         const ctx = document.getElementById('activityChart').getContext('2d');
         activityChartInstance = new Chart(ctx, {
             type: 'doughnut',
-            data: { labels: translatedLabels, datasets: [{ data: values, backgroundColor: backgroundColors }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            data: {
+                labels: translatedLabels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
         });
     }
     function showToast(message, type = "success") {
         const toastId = "toast-" + (toastCount++);
         const bgClass = type === "success" ? "bg-success" : "bg-danger";
         const toastHtml = `
-            <div id="${toastId}" class="toast align-itemsL:center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div id="${toastId}" class="toast align-items:center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
-                    <div class="toast-body"><i class="bi bi-check-circle-fill"></i> ${message}</div>
+                    <div class="toast-body">
+                        <i class="bi bi-check-circle-fill"></i> ${message}
+                    </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
-            </div>`;
+            </div>
+       `;
+
         $("#toastContainer").append(toastHtml);
         const toastElement = new bootstrap.Toast(document.getElementById(toastId));
         toastElement.show();

@@ -1,7 +1,5 @@
-// Đặt tại: src/main/java/com/example/smartlearning/service/FlashcardService.java
 package com.example.smartlearning.service;
 
-import com.example.smartlearning.dto.*;
 import com.example.smartlearning.dto.ai.AiFlashcardDTO;
 import com.example.smartlearning.model.*;
 import com.example.smartlearning.repository.*;
@@ -16,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional; // <-- THÊM IMPORT
 import java.util.stream.Collectors;
+
+import com.example.smartlearning.service.LearningLogService;
 
 @Service
 public class FlashcardService {
@@ -39,7 +39,6 @@ public class FlashcardService {
     @Autowired
     private UserRepository userRepository;
 
-    // (Hàm createFlashcardSet giữ nguyên)
     @Transactional
     public FlashcardSet createFlashcardSet(FlashcardRequestDTO requestDTO, String lectureText) {
         UserSubject userSubject = userSubjectRepository.findById(requestDTO.getUserSubjectId())
@@ -63,7 +62,19 @@ public class FlashcardService {
             }).collect(Collectors.toList());
             newSet.setFlashcards(cardEntities);
             FlashcardSet savedSet = flashcardSetRepository.save(newSet);
-            // (Đã comment out learningLogService)
+
+            try {
+                learningLogService.logActivity(
+                        userSubject.getUser(),
+                        userSubject,
+                        "FLASHCARD_GENERATED",
+                        "Đã tạo bộ flashcard: " + savedSet.getTitle(),
+                        0
+                );
+            } catch (Exception e) {
+                System.err.println("Lỗi ghi log (Flashcard): " + e.getMessage());
+            }
+
             return savedSet;
         } catch (Exception e) {
             System.err.println("Không thể parse JSON từ AI (Flashcard): " + e.getMessage());
@@ -72,7 +83,6 @@ public class FlashcardService {
         }
     }
 
-    // (Hàm getFlashcardSetDetails giữ nguyên)
     @Transactional(readOnly = true)
     public FlashcardSetDTO getFlashcardSetDetails(Integer setId) {
         FlashcardSet flashcardSet = flashcardSetRepository.findById(setId)

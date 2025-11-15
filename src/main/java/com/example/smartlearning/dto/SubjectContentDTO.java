@@ -12,7 +12,7 @@ public class SubjectContentDTO {
     private int progressPercentage;
 
     // Danh sách nội dung AI đã tạo
-    private List<StudyPlanInfoDTO> studyPlans;
+    private List<StudyPlanDTO> studyPlans;
     private List<QuizInfoDTO> quizzes;
     private List<FlashcardSetInfoDTO> flashcardSets;
 }

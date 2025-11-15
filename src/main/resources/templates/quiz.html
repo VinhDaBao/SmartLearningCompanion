@@ -105,7 +105,7 @@
     <div id="resultsScreen" class="card shadow-sm border-0">
         <div class="card-body text-center p-5">
             <h1 class="display-3">Hoàn thành!</h1>
-            <h2 class="mb-4">Kết quả của bạn: <span id="quizScore" class="text-success"></span></h2>
+            <h2 id="resultTitle" class="mb-4">Kết quả của bạn: <span id="quizScore"></span></h2>
             <div id="scoreChartContainer" style="max-width: 200px; margin: 0 auto 20px;">
                 <canvas id="scoreChart"></canvas> </div>
             <a class="btn btn-primary" href="/dashboard">Về Dashboard</a>
@@ -123,8 +123,9 @@
 
 <script>
     let quizId = null;
-    let allQuestions = []; // Lưu trữ tất cả câu hỏi
-    let userAnswers = {}; // Lưu trữ { questionId: "A" }
+    let userSubjectId = null; // <-- THÊM ID MÔN HỌC
+    let allQuestions = [];
+    let userAnswers = {};
     let scoreChartInstance = null;
     let carousel = null;
 
@@ -161,6 +162,10 @@
                     return;
                 }
 
+                // --- BẮT ĐẦU SỬA LỖI ---
+                userSubjectId = data.userSubjectId; // LƯU ID MÔN HỌC TỪ SERVER
+                // --- KẾT THÚC SỬA LỖI ---
+
                 $("#quizTitle").text(data.title);
                 // Đặt link "Quay lại"
                 $("#backButton").attr("href", `/my-subject/${data.userSubjectId}`);
@@ -177,6 +182,7 @@
 
     /**
      * Render các câu hỏi vào Carousel
+     * (Giữ nguyên)
      */
     function renderQuestions(questions) {
         const carouselInner = $("#carouselInner");
@@ -186,7 +192,6 @@
             const isActive = (index === 0) ? "active" : "";
             let optionsHtml = '';
 
-            // Trộn các lựa chọn (nếu muốn)
             const options = q.options; // { "A": "...", "B": "..." }
             for (const key in options) {
                 optionsHtml += `
@@ -213,128 +218,153 @@
             carouselInner.append(questionItem);
         });
 
-        // Gắn sự kiện Click cho TẤT CẢ các nút lựa chọn
         $(".quiz-option").on("click", handleOptionSelect);
     }
 
     /**
      * Khi người dùng chọn một đáp án
+     * (Giữ nguyên)
      */
     function handleOptionSelect(event) {
         const selectedButton = $(this);
         const questionId = selectedButton.data("question-id");
         const optionKey = selectedButton.data("option-key");
 
-        // 1. Lưu câu trả lời
         userAnswers[questionId] = optionKey;
 
-        // 2. Cập nhật UI (Làm "đẹp")
-        // Xóa class 'selected' của các nút CÙNG câu hỏi
         selectedButton.closest(".quiz-options-list").find(".quiz-option").removeClass("selected");
-        // Thêm class 'selected' cho nút vừa bấm
         selectedButton.addClass("selected");
 
-        // 3. Cập nhật thanh tiến độ
         const answeredCount = Object.keys(userAnswers).length;
         updateProgress(answeredCount);
 
-        // 4. Tự động trượt (slide) sang câu tiếp theo
         const currentItemIndex = $(".carousel-item.active").index();
         if (currentItemIndex < allQuestions.length - 1) {
             setTimeout(() => {
-                carousel.next(); // Tự động trượt
-            }, 300); // Chờ 0.3s
+                carousel.next();
+            }, 300);
         }
     }
 
     /**
      * Cập nhật thanh tiến độ
+     * (Giữ nguyên)
      */
     function updateProgress(answeredCount) {
         const total = allQuestions.length;
         const percentage = (answeredCount / total) * 100;
         $("#quizProgress").css("width", percentage + "%");
 
-        // Nếu đã trả lời hết, hiện nút Nộp bài
         if (answeredCount === total) {
             $("#submitQuizButton").show();
         }
     }
 
     /**
-     * Khi bấm nút Nộp bài
+     * SỬA LỖI: Khi bấm nút Nộp bài
      */
     function handleSubmitQuiz() {
-            let score = 0;
-            const explanationsHtml = [];
-
-            // 1. Chấm điểm
-            allQuestions.forEach((q, index) => {
-                const userAnsKey = userAnswers[q.questionId] || null; // Lấy key (ví dụ: 'A')
-                const correctAnsKey = q.correctAnswer;
-                const options = q.options; // { "A": "Text A", "B": "Text B" }
-
-                // MỚI: Lấy nội dung text của câu trả lời
-                const userAnsText = userAnsKey ? options[userAnsKey] : "<i>(Bỏ qua)</i>";
-                const correctAnsText = options[correctAnsKey];
-
-                let explanation = `
-                    <div class="p-3 mb-2 border rounded">
-                        <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${q.questionText}</p>
-                `;
-
-                if (userAnsKey === correctAnsKey) {
-                    score++;
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-success">${userAnsKey}. ${userAnsText} (Đúng)</strong></p>`;
-                } else if (userAnsKey === null) {
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-muted">${userAnsText}</strong></p>`;
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Đáp án đúng: <strong class="text-success">${correctAnsKey}. ${correctAnsText}</strong></p>`;
-                } else { // Trả lời sai
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-danger">${userAnsKey}. ${userAnsText} (Sai)</strong></p>`;
-                    explanation += `<p class="mb-1">Đáp án đúng: <strong class="text-success">${correctAnsKey}. ${correctAnsText}</strong></p>`;
-                }
-                explanation += `<p class="text-muted mb-0"><em>Giải thích: ${q.explanation}</em></p></div>`;
-                explanationsHtml.push(explanation);
-            });
-
-            const total = allQuestions.length;
-            const percentage = Math.round((score / total) * 100);
-
-            // 2. Ẩn Quiz, Hiện Kết quả
-            $("#quizScreen").hide();
-            $("#resultsScreen").show();
-
-            // 3. (SỬA) Hiển thị điểm VÀ thông điệp động
-            const scoreText = $("#quizScore");
-            const resultTitle = $("#resultTitle");
-
-            scoreText.text(`${score} / ${total} (${percentage}%)`);
-            scoreText.removeClass("text-result-bad text-result-medium text-result-good"); // Xóa màu cũ
-
-            if (percentage < 50) {
-                resultTitle.text("Cần cố gắng hơn! 😢");
-                scoreText.addClass("text-result-bad"); // Thêm class màu đỏ
-            } else if (percentage < 80) {
-                resultTitle.text("Làm tốt lắm! 🤔");
-                scoreText.addClass("text-result-medium"); // Thêm class màu vàng
-            } else {
-                resultTitle.text("Tuyệt vời! 🎉");
-                scoreText.addClass("text-result-good"); // Thêm class màu xanh
-            }
-
-            // 4. Hiển thị giải thích
-            $("#explanationsContainer").append(explanationsHtml.join(""));
-
-            // 5. Vẽ biểu đồ
-            renderScoreChart(score, total - score);
+        // Kiểm tra xem đã trả lời hết chưa (nếu không, server sẽ báo lỗi)
+        if (Object.keys(userAnswers).length < allQuestions.length) {
+            alert("Vui lòng trả lời tất cả các câu hỏi trước khi nộp bài!");
+            return;
         }
+
+        // 1. Chuẩn bị dữ liệu để gửi lên server (Đúng định dạng SubmitQuizRequestDTO)
+        const submissionData = {
+            userSubjectId: userSubjectId,
+            quizId: quizId,
+            answers: userAnswers
+        };
+
+        // Vô hiệu hóa nút để tránh gửi lại
+        $("#submitQuizButton").prop('disabled', true).text('Đang nộp bài...');
+
+        // 2. GỌI API SUBMIT
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/quizzes/submit", // Endpoint đã tạo ở Bước 1
+            contentType: "application/json",
+            data: JSON.stringify(submissionData),
+            success: function(responseDTO) { // responseDTO là SubmitQuizResponseDTO
+
+                // 3. Sử dụng điểm số CHÍNH THỨC từ server
+                renderResults(responseDTO);
+                $("#backToSubjectButton").attr('href', `/my-subject/${userSubjectId}`);
+                // Gỡ vô hiệu hóa (disable)
+                $("#submitQuizButton").prop('disabled', false).text('Đã nộp bài!');
+            },
+            error: function(xhr) {
+                alert("Lỗi khi nộp bài: " + xhr.responseText);
+                $("#submitQuizButton").prop('disabled', false).text('Nộp bài thất bại! Thử lại');
+            }
+        });
+    }
+
+    /**
+     * HIỂN THỊ KẾT QUẢ VÀ FEEDBACK (Dùng dữ liệu từ server)
+     */
+    function renderResults(responseDTO) {
+        const score = responseDTO.correctCount;
+        const total = responseDTO.totalQuestions;
+        const percentage = Math.round(responseDTO.score); // Điểm trên thang 10
+        const feedback = responseDTO.feedback; // Danh sách các câu trả lời
+
+        // 1. Ẩn Quiz, Hiện Kết quả
+        $("#quizScreen").hide();
+        $("#resultsScreen").show();
+
+        // 2. Cập nhật Điểm và Màu sắc
+        const scoreText = $("#quizScore");
+        const resultTitle = $("#resultTitle");
+
+        scoreText.text(`${score} / ${total} (${percentage}%)`);
+        scoreText.removeClass("text-result-bad text-result-medium text-result-good");
+
+        if (percentage < 5) {
+            resultTitle.text("Cần cố gắng hơn! 😢");
+            scoreText.addClass("text-result-bad");
+        } else if (percentage < 8) {
+            resultTitle.text("Làm tốt lắm! 🤔");
+            scoreText.addClass("text-result-medium");
+        } else {
+            resultTitle.text("Tuyệt vời! 🎉");
+            scoreText.addClass("text-result-good");
+        }
+
+        // 3. Hiển thị giải thích
+        const explanationsContainer = $("#explanationsContainer");
+        explanationsContainer.find('div.p-3').remove(); // Xóa giả lập cũ
+
+        feedback.forEach((qFeedback, index) => {
+            const isCorrect = qFeedback.isCorrect;
+            const statusClass = isCorrect ? 'text-success' : 'text-danger';
+            const statusText = isCorrect ? 'Đúng' : 'Sai';
+            const userChoiceText = allQuestions.find(q => q.questionId === qFeedback.questionId).options[qFeedback.selectedAnswer] || "<i>(Bỏ qua)</i>";
+            const correctChoiceText = allQuestions.find(q => q.questionId === qFeedback.questionId).options[qFeedback.correctAnswer];
+            const originalQuestion = allQuestions.find(q => q.questionId === qFeedback.questionId);
+
+            const explanation = `
+                <div class="p-3 mb-3 border rounded ${isCorrect ? 'border-success-subtle bg-light-green' : 'border-danger-subtle bg-light-red'}">
+                    <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${originalQuestion.questionText}</p>
+                    <p class="mb-1">Bạn đã chọn: <strong class="${statusClass}">${qFeedback.selectedAnswer}. ${userChoiceText} (${statusText})</strong></p>
+
+                    ${!isCorrect ?
+                        `<p class="mb-1">Đáp án đúng: <strong class="text-success">${qFeedback.correctAnswer}. ${correctChoiceText}</strong></p>`
+                        : ''}
+
+                    <p class="text-muted mb-0"><em>Giải thích: ${qFeedback.explanation}</em></p>
+                </div>`;
+            explanationsContainer.append(explanation);
+        });
+
+        // 4. Vẽ biểu đồ
+        renderScoreChart(score, total - score);
+    }
 
     function renderScoreChart(correct, incorrect) {
         if(scoreChartInstance) scoreChartInstance.destroy();
-        const ctx = document.getElementById('scoreChart').getContext('d');
+        const ctx = document.getElementById('scoreChart').getContext('2d');
         scoreChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {

@@ -1,3 +1,4 @@
+// Đặt tại: src/main/java/com/example/smartlearning/service/UserSubjectService.java
 package com.example.smartlearning.service;
 
 import com.example.smartlearning.model.Subject;
@@ -8,7 +9,7 @@ import com.example.smartlearning.repository.UserRepository;
 import com.example.smartlearning.repository.UserSubjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional; // <-- IMPORT MỚI
 
 import java.util.List;
 import java.util.Optional;
@@ -28,17 +29,19 @@ public class UserSubjectService {
     /**
      * Lấy tất cả các môn học mà một user đã đăng ký.
      */
+    // (Hàm này nên thêm @Transactional)
+    @Transactional(readOnly = true)
     public List<UserSubject> getEnrolledSubjectsByUserId(Integer userId) {
-
-        // --- (ĐÂY LÀ DÒNG ĐÃ SỬA) ---
-        // Code cũ (lỗi): findByUserId(userId)
         return userSubjectRepository.findByUserUserId(userId);
     }
 
     /**
      * Lấy chi tiết một môn học đã đăng ký.
-     * (Hàm này dùng findById nên không lỗi, giữ nguyên)
+     * === PHẦN SỬA LỖI 2 ===
+     * Thêm @Transactional để giữ Session mở,
+     * cho phép ModelMapper truy cập các thuộc tính LAZY
      */
+    @Transactional(readOnly = true)
     public UserSubject getEnrolledSubjectDetails(Integer userSubjectId) {
         return userSubjectRepository.findById(userSubjectId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found: " + userSubjectId));
@@ -51,8 +54,6 @@ public class UserSubjectService {
     public UserSubject enrollUserInSubject(Integer userId, Integer subjectId) {
 
         // 1. Kiểm tra xem đã đăng ký chưa
-        // --- (ĐÂY LÀ DÒNG ĐÃ SỬA) ---
-        // Code cũ (lỗi): findByUserIdAndSubjectId(userId, subjectId)
         Optional<UserSubject> existing = userSubjectRepository.findByUserUserIdAndSubjectSubjectId(userId, subjectId);
 
         if (existing.isPresent()) {
@@ -69,7 +70,7 @@ public class UserSubjectService {
         UserSubject newUserSubject = new UserSubject();
         newUserSubject.setUser(user);
         newUserSubject.setSubject(subject);
-        newUserSubject.setProgressPercentage(0);
+        newUserSubject.setProgressPercentage(0); // Mặc định là 0
 
         // 4. Lưu vào database
         return userSubjectRepository.save(newUserSubject);

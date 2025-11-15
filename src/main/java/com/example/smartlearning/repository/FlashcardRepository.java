@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
-    // Chúng ta không cần hàm tùy chỉnh vì đã có Cascade
+    long countByTopic_TopicId(Integer topicId);
 }

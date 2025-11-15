@@ -1,9 +1,11 @@
+// Đặt tại: src/main/java/com/example/smartlearning/config/SecurityConfig.java
 package com.example.smartlearning.config;
 import com.example.smartlearning.security.JwtAuthenticationFilter;
 import com.example.smartlearning.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // <-- IMPORT MỚI
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -22,14 +24,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity // Kích hoạt Spring Security
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationFilter jwtAuthFilter; // "Người gác cổng"
+    private JwtAuthenticationFilter jwtAuthFilter;
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService; // Dịch vụ tải User
+    private UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -54,7 +56,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // Cho phép frontend của bạn (có thể cần thay đổi)
         configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Đã có OPTIONS
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
@@ -74,6 +76,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
+                        // === PHẦN SỬA LỖI 1 ===
+                        // Cho phép tất cả request OPTIONS (preflight) đi qua
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 1. Mở API xác thực
                         .requestMatchers("/api/auth/**").permitAll()
@@ -87,13 +92,13 @@ public class SecurityConfig {
                                 "/profile",
                                 "/quiz/**",
                                 "/flashcards/**",
-                                "/my-subject/**" // <-- DÒNG BỊ THIẾU ĐÃ ĐƯỢC THÊM LẠI
+                                "/my-subject/**"
                         ).permitAll()
 
                         // 3. Mở các file tĩnh (CSS/JS)
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
 
-                        // 4. Đóng tất cả các API CÒN LẠI (như /api/dashboard/**, /api/quizzes/**)
+                        // 4. Đóng tất cả các API CÒN LẠI
                         .anyRequest().authenticated()
                 )
 

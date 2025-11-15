@@ -3,20 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết Môn học</title>
+    <title id="subjectTitle">Mạng lưới Tri thức - Smart Learning</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        .list-group-item .badge {
-            font-size: 0.9em;
+        /* CSS Chung */
+        .list-group-item .badge { font-size: 0.9em; }
+        .markdown-body { background-color: transparent; }
+
+        /* --- STYLE CHO MẠNG LƯỚI TRI THỨC --- */
+        #knowledge-graph {
+            width: 100%;
+            height: 650px;
+            border: 1px solid #dbe6f0;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-top: 15px;
         }
-        .markdown-body {
-            background-color: transparent;
+
+        /* FIX: Tăng chiều cao của Accordion và thêm thanh cuộn */
+        #plansAccordion .accordion-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Style cho Modal Recommendation (Đã giữ nguyên) */
+        .adaptive-content .header { font-size: 1.1em; font-weight: bold; color: #0056b3; margin-bottom: 10px; }
+        .adaptive-content .ai-message {
+            font-size: 1em; color: #333; line-height: 1.5; margin-bottom: 15px;
+            padding: 12px; background: #f0f4f9; border-radius: 8px; border: 1px dashed #0056b3;
+        }
+        .content-card {
+            display: block; background: #ffffff; border-radius: 8px; padding: 15px;
+            text-decoration: none; color: #222; border: 1px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: all 0.2s ease-in-out;
+        }
+        .content-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 50, 150, 0.15); border-color: #0056b3; }
+        .content-card .content-type { font-size: 0.8em; font-weight: bold; color: #0056b3; text-transform: uppercase; margin-bottom: 5px; }
+        .content-card .content-title { font-size: 1.1em; font-weight: bold; }
+        .content-card .content-duration { font-size: 0.9em; color: #777; margin-top: 8px; }
+        .congrats-message {
+            text-align: center; font-size: 1.1em; color: #006400; font-weight: bold;
+            padding: 15px; background: #f0fff0; border: 1px solid #006400; border-radius: 8px;
+        }
+        .modal-body-scrollable {
+            max-height: 80vh;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -55,12 +95,28 @@
                 <div class="progress" role="progressbar" style="height: 25px;">
                     <div id="subjectProgress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%">0%</div>
                 </div>
+                <small class="text-muted mt-1">Điểm gần nhất: <strong id="currentScore">N/A</strong></small>
             </div>
         </div>
 
         <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-lg border-0 h-100">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3"><i class="bi bi-diagram-3-fill text-info"></i> Mạng lưới Tri thức Cá nhân</h4>
+                        <p class="text-muted small">Màu sắc thể hiện mức độ thông thạo của bạn: <span class="badge bg-success">Thông thạo (>=80%)</span> | <span class="badge bg-warning">Đang học (50-79%)</span> | <span class="badge bg-danger">Yếu (<50%)</span> | <span class="badge bg-secondary">Chưa học</span>. Nhấp vào nút để nhận gợi ý!</p>
 
-            <div class="col-lg-5">
+                        <div id="knowledge-graph">
+                            <div class="d-flex flex-column justify-content-center align-items-center h-100">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Đang tải và phân tích dữ liệu quiz...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <h4 class="card-title"><i class="bi bi-calendar-check text-primary"></i> Lộ trình học (Plans)</h4>
@@ -70,60 +126,188 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <h4 class="card-title"><i class="bi bi-patch-question-fill text-success"></i> Bộ Quiz (Trắc nghiệm)</h4>
-                        <div class="list-group" id="quizList">
+                        <div class="list-group list-group-flush" id="quizList">
+                        </div>
+                        <div class="d-flex justify-content-between mt-3" id="quizListControls" style="display:none;">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleView('#quizList', 5, '#quizShowMore')">
+                                <i class="bi bi-chevron-up"></i> Ẩn bớt
+                            </button>
+                            <button id="quizShowMore" class="btn btn-sm btn-primary" onclick="toggleView('#quizList', Infinity, '#quizShowMore')">
+                                <i class="bi bi-chevron-down"></i> Xem tất cả
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-3">
+            <div class="col-lg-6 mb-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body">
                         <h4 class="card-title"><i class="bi bi-card-checklist text-warning"></i> Bộ Flashcard</h4>
-                        <div class="list-group" id="flashcardList">
+                        <div class="list-group list-group-flush" id="flashcardList">
+                        </div>
+                        <div class="d-flex justify-content-between mt-3" id="flashcardListControls" style="display:none;">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleView('#flashcardList', 5, '#flashcardShowMore')">
+                                <i class="bi bi-chevron-up"></i> Ẩn bớt
+                            </button>
+                            <button id="flashcardShowMore" class="btn btn-sm btn-primary" onclick="toggleView('#flashcardList', Infinity, '#flashcardShowMore')">
+                                <i class="bi bi-chevron-down"></i> Xem tất cả
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="recommendationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="recommendationTitle"><i class="bi bi-lightbulb-fill text-warning"></i> Đề xuất Học tập</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="recommendationBody">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="planViewerModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planViewerTitle">Lộ trình học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-scrollable">
+                <div class="markdown-body" id="planViewerContent">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="quizModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-patch-question-fill"></i> Tạo Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quizForm">
+                    <input type="hidden" id="quizUserSubjectId">
+                    <div class="mb-3">
+                        <label for="quizTopic" class="form-label">Chủ đề Quiz (Tùy chọn):</label>
+                        <input type="text" class="form-control" id="quizTopic"
+                               placeholder="Ví dụ: Chương 1: Giới thiệu, hoặc để trống">
+                    </div>
+                    <div class="mb-3">
+                        <label for="quizNumQuestions" class="form-label">Số lượng câu hỏi: <strong id="quizCountValue">10</strong> câu</label>
+                        <input type="range" class="form-range" id="quizNumQuestions" min="5" max="50" step="5" value="10"
+                               oninput="document.getElementById('quizCountValue').innerText = this.value">
+                    </div>
+                    <div class="mb-3">
+                        <label for="quizLectureFile" class="form-label">
+                            Tải file bài giảng để tạo câu hỏi (tuỳ chọn)
+                        </label>
+                        <input class="form-control" type="file" id="quizLectureFile"
+                               accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">
+                        <div class="form-text">
+                            Nên chọn đúng slide / chương bạn muốn tạo Quiz để câu hỏi sát nội dung nhất.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" id="submitQuizButton">
+                    <i class="bi bi-magic"></i> Tạo Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="flashcardModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-card-checklist"></i> Tạo Flashcard</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="flashcardForm">
+                    <input type="hidden" id="flashcardUserSubjectId">
+                    <div class="mb-3">
+                        <label for="flashcardTitle" class="form-label">Tiêu đề bộ Flashcard:</label>
+                        <input type="text" class="form-control" id="flashcardTitle" required placeholder="Ví dụ: Các thuật ngữ Spring Boot">
+                    </div>
+                    <div class="mb-3">
+                        <label for="flashcardTopic" class="form-label">Chủ đề (Tùy chọn):</label>
+                        <input type="text" class="form-control" id="flashcardTopic" placeholder="Ví dụ: Annotations, hoặc để trống">
+                    </div>
+                    <div class="mb-3">
+                        <label for="flashcardNumCards" class="form-label">Số lượng thẻ: <strong id="flashcardCountValue">10</strong> thẻ</label>
+                        <input type="range" class="form-range" id="flashcardNumCards" min="10" max="50" step="5" value="10"
+                               oninput="document.getElementById('flashcardCountValue').innerText = this.value">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-warning" id="submitFlashcardButton">
+                    <i class="bi bi-magic"></i> Tạo Flashcard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    $(document).ready(function() {
-        // 1. Kiểm tra đăng nhập
-        const token = localStorage.getItem("jwtToken");
-        if (!token) {
-            window.location.href = "/login";
-            return;
-        }
+    // Khai báo biến global
+    let USER_SUBJECT_ID = null;
+    let recommendationModal = null;
+    let planViewerModal = null;
 
-        // 2. Gắn Token vào tất cả request
+    $(document).ready(function() {
+        const token = localStorage.getItem("jwtToken");
+        if (!token) { window.location.href = "/login"; return; }
+
         $.ajaxSetup({
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-            }
+            beforeSend: function(xhr) { xhr.setRequestHeader('Authorization', 'Bearer ' + token); }
         });
         $("#logoutButton").on("click", logout);
 
-        // 3. Lấy 'userSubjectId' từ URL
         const pathParts = window.location.pathname.split('/');
-        const userSubjectId = pathParts[pathParts.length - 1];
+        USER_SUBJECT_ID = pathParts[pathParts.length - 1];
 
-        if (userSubjectId) {
-            loadSubjectContent(userSubjectId);
+        recommendationModal = new bootstrap.Modal(document.getElementById('recommendationModal'));
+        planViewerModal = new bootstrap.Modal(document.getElementById('planViewerModal'));
+
+        if (USER_SUBJECT_ID) {
+            loadSubjectContent(USER_SUBJECT_ID);
         } else {
             $("#pageLoading").html('<h4 class="text-danger">Lỗi: Không tìm thấy ID môn học.</h4>');
         }
+
+        $("#quizUserSubjectId").val(USER_SUBJECT_ID);
+        $("#flashcardUserSubjectId").val(USER_SUBJECT_ID);
     });
+
 
     function logout() {
         localStorage.removeItem("jwtToken");
@@ -132,87 +316,52 @@
     }
 
     /**
-     * Hàm chính: Tải tất cả nội dung
+     * HÀM XEM LỘ TRÌNH FULLSCREEN (MỚI)
      */
+    function showPlanFullscreen(planTitle, planContent) {
+        $("#planViewerTitle").text(planTitle);
+        $("#planViewerContent").html(marked.parse(planContent || "Nội dung trống..."));
+        planViewerModal.show();
+    }
+
+    /**
+     * HÀM PHÂN TRANG/ẨN BỚT (MỚI)
+     */
+    function toggleView(listSelector, limit, buttonSelector) {
+        const items = $(`${listSelector} > a`);
+        const isCollapsed = $(buttonSelector).text().includes('Ẩn bớt');
+
+        if (isCollapsed) {
+            // Chỉ hiện Top N (Ẩn bớt)
+            items.slice(limit).hide();
+            $(buttonSelector).text('Xem tất cả').removeClass('btn-outline-secondary').addClass('btn-primary');
+        } else {
+            // Hiện tất cả
+            items.show();
+            $(buttonSelector).text('Ẩn bớt').removeClass('btn-primary').addClass('btn-outline-secondary');
+        }
+    }
+
+
     function loadSubjectContent(userSubjectId) {
         $.ajax({
             type: "GET",
             url: `http://localhost:8080/api/my-subject/${userSubjectId}`,
             success: function(data) {
-                // data ở đây là SubjectContentDTO
-
                 // 1. Điền thông tin chung
+                $("#subjectTitle").text(data.subjectName + ' - Mạng lưới Tri thức');
                 $("#subjectName").text(data.subjectName);
                 $("#subjectDescription").text(data.subjectDescription);
                 $("#subjectProgress").css("width", data.progressPercentage + "%").text(data.progressPercentage + "%");
+                $("#currentScore").text(data.currentScore != null ? data.currentScore.toFixed(1) : 'Chưa có');
 
-                // 2. Render Lộ trình (Study Plans)
-                const plansAccordion = $("#plansAccordion");
-                plansAccordion.empty();
-                if (data.studyPlans && data.studyPlans.length > 0) {
-                    data.studyPlans.forEach((plan, index) => {
-                        // Dùng hàm marked() để chuyển Markdown -> HTML
-                        const planHtmlContent = marked.parse(plan.planContent || "Nội dung trống...");
+                // 2. Load các list (Plans, Quiz, Flashcard)
+                renderLists(data);
 
-                        const planItem = `
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${plan.studyPlanId}">
-                                        Lộ trình #${plan.studyPlanId} (Tạo lúc: ${new Date(plan.generatedAt).toLocaleString('vi-VN')})
-                                    </button>
-                                </h2>
-                                <div id="collapse-${plan.studyPlanId}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#plansAccordion">
-                                    <div class="accordion-body markdown-body">
-                                        ${planHtmlContent}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        plansAccordion.append(planItem);
-                    });
-                } else {
-                    plansAccordion.html('<p class="text-muted">Chưa có lộ trình nào. Hãy quay lại Dashboard để tạo!</p>');
-                }
+                // 3. Kích hoạt Mạng lưới Tri thức (Phần WOW)
+                loadKnowledgeGraph(userSubjectId);
 
-                // 3. Render Quiz
-                const quizList = $("#quizList");
-                quizList.empty();
-                if (data.quizzes && data.quizzes.length > 0) {
-                    data.quizzes.forEach(quiz => {
-                        const quizItem = `
-                            <a href="/quiz/${quiz.quizId}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-patch-check-fill text-success"></i> ${quiz.title}
-                                </span>
-                                <span class="badge bg-success rounded-pill">${quiz.questionCount} câu</span>
-                            </a>
-                        `;
-                        quizList.append(quizItem);
-                    });
-                } else {
-                    quizList.html('<p class="text-muted">Chưa có bộ Quiz nào. Hãy quay lại Dashboard để tạo!</p>');
-                }
-
-                // 4. Render Flashcard
-                const flashcardList = $("#flashcardList");
-                flashcardList.empty();
-                if (data.flashcardSets && data.flashcardSets.length > 0) {
-                    data.flashcardSets.forEach(set => {
-                        const setItem = `
-                            <a href="/flashcards/${set.setId}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi bi-collection-fill text-warning"></i> ${set.title}
-                                </span>
-                                <span class="badge bg-warning rounded-pill">${set.flashcardCount} thẻ</span>
-                            </a>
-                        `;
-                        flashcardList.append(setItem);
-                    });
-                } else {
-                    flashcardList.html('<p class="text-muted">Chưa có bộ Flashcard nào. Hãy quay lại Dashboard để tạo!</p>');
-                }
-
-                // 5. Hiển thị nội dung
+                // 4. Hiển thị nội dung
                 $("#pageLoading").hide();
                 $("#mainContent").show();
             },
@@ -221,6 +370,264 @@
                 if (xhr.status === 401 || xhr.status === 403) logout();
             }
         });
+    }
+
+    function renderLists(data) {
+        const LIST_LIMIT = 5;
+
+         // 2. Render Lộ trình (Study Plans) - ĐÃ THÊM NÚT FULLSCREEN
+        const plansAccordion = $("#plansAccordion"); plansAccordion.empty();
+        if (data.studyPlans && data.studyPlans.length > 0) {
+            data.studyPlans.forEach((plan, index) => {
+                const planContent = plan.planContent || "Nội dung trống...";
+                const planTitle = `Lộ trình #${plan.studyPlanId}`;
+                const escapedContent = planContent.replace(/`/g, '\\`');
+
+                const planItem = `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                             <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${plan.studyPlanId}">
+                                ${planTitle} (Tạo lúc: ${new Date(plan.generatedAt).toLocaleString('vi-VN')})
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary me-2"
+                                onclick="showPlanFullscreen('${planTitle}', \`${escapedContent}\`)">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
+                        </h2>
+                        <div id="collapse-${plan.studyPlanId}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#plansAccordion">
+                            <div class="accordion-body markdown-body">
+                                ${marked.parse(planContent)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                plansAccordion.append(planItem);
+            });
+        } else { plansAccordion.html('<p class="text-muted">Chưa có lộ trình nào. Hãy quay lại Dashboard để tạo!</p>'); }
+
+        // 3. Render Quiz - ĐÃ THÊM THỐNG KÊ VÀ PHÂN TRANG
+        const quizList = $("#quizList"); quizList.empty();
+        if (data.quizzes && data.quizzes.length > 0) {
+            data.quizzes.forEach((quiz, index) => {
+                const isAttempted = quiz.incorrectCount != null;
+                const scoreText = isAttempted ?
+                    `<span class="text-success fw-bold">${quiz.lastAttemptScore.toFixed(1)}/10</span>` :
+                    `<span class="text-secondary">Chưa làm</span>`;
+                const errorText = isAttempted && quiz.incorrectCount > 0 ?
+                    `<span class="badge bg-danger">${quiz.incorrectCount} sai</span>` : '';
+
+                const quizItem = `
+                    <a href="/quiz/${quiz.quizId}" class="list-group-item list-group-item-action">
+                        <div>
+                            <i class="bi bi-patch-check-fill text-success"></i> ${quiz.title}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center small mt-1">
+                            <span>Điểm gần nhất: ${scoreText}</span>
+                            <span>${quiz.questionCount} câu ${errorText}</span>
+                        </div>
+                    </a>
+                `;
+                quizList.append(quizItem);
+            });
+            if (data.quizzes.length > LIST_LIMIT) { $("#quizListControls").show(); } else { $("#quizListControls").hide(); }
+        } else { quizList.html('<p class="text-muted">Chưa có bộ Quiz nào. Hãy quay lại Dashboard để tạo!</p>'); $("#quizListControls").hide(); }
+
+        // 4. Render Flashcard
+        const flashcardList = $("#flashcardList"); flashcardList.empty();
+        if (data.flashcardSets && data.flashcardSets.length > 0) {
+            data.flashcardSets.forEach((set, index) => {
+                const setItem = `
+                    <a href="/flashcards/${set.setId}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-collection-fill text-warning"></i> ${set.title}</span>
+                        <span class="badge bg-warning rounded-pill">${set.flashcardCount || '0'} thẻ</span>
+                    </a>
+                `;
+                flashcardList.append(setItem);
+            });
+            if (data.flashcardSets.length > LIST_LIMIT) { $("#flashcardListControls").show(); } else { $("#flashcardListControls").hide(); }
+        } else { flashcardList.html('<p class="text-muted">Chưa có bộ Flashcard nào. Hãy quay lại Dashboard để tạo!</p>'); $("#flashcardListControls").hide(); }
+    }
+
+
+    /**
+     * GIAI ĐOẠN 1: VẼ ĐỒ THỊ VIS.JS
+     */
+    function loadKnowledgeGraph(userSubjectId) {
+        const container = document.getElementById('knowledge-graph');
+
+        // Loading
+        $(container).html(`
+            <div class="d-flex flex-column justify-content-center align-items-center h-100">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Đang tải và phân tích dữ liệu quiz...</p>
+            </div>
+        `);
+
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/knowledge-map/${userSubjectId}`
+        })
+        .done(function(mapData) { // mapData là KnowledgeMapDTO
+
+            const processedNodes = mapData.nodes.map(node => ({
+                ...node,
+                title: node.title,
+                size: 15 + node.quizCount + node.flashcardCount,
+                label: node.label
+            }));
+
+            const nodes = new vis.DataSet(processedNodes);
+            const edges = new vis.DataSet(mapData.edges);
+
+            const data = { nodes: nodes, edges: edges };
+
+            const options = {
+                // ĐÃ SỬA: Đổi lại shape thành BOX để chữ không bị ẩn
+                nodes: {
+                    shape: "box",
+                    margin: 10,
+                    font: { size: 14, color: "#333", face: "Arial" },
+                    borderWidth: 2
+                },
+                edges: { arrows: "to", color: "#888", smooth: {enabled: true, type: "continuous"} },
+                groups: {
+                    mastered: { color: { background: "#198754", border: "#155724", highlight: { background: "#28a745", border: "#155724" } }, font: { color: "#fff" } }, // Xanh lá đậm
+                    learning: { color: { background: "#ffc107", border: "#856404", highlight: { background: "#ffdb58", border: "#856404" } }, font: { color: "#333" } }, // Vàng
+                    struggling: { color: { background: "#dc3545", border: "#721c24", highlight: { background: "#f8d7da", border: "#721c24" } }, font: { color: "#fff" } }, // Đỏ
+                    not_started: { color: { background: "#e2e3e5", border: "#6c757d", highlight: { background: "#d0d0d0", border: "#6c757d" } }, font: { color: "#333" } } // Xám
+                },
+                // FIX HITBOX: Sử dụng solver vật lý tốt hơn để kéo thả dễ hơn
+                physics: {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -100,
+                        springConstant: 0.04,
+                        avoidOverlap: 0.5 // Giảm độ tránh chồng chéo
+                    },
+                    maxVelocity: 15,
+                    minVelocity: 0.75,
+                    timestep: 0.5,
+                    stabilization: { iterations: 250 }
+                },
+                layout: { hierarchical: { enabled: false } },
+                interaction: { hover: true, tooltipDelay: 100, zoomSpeed: 0.5 }
+            };
+
+            const network = new vis.Network(container, data, options);
+
+            network.on("click", function(params) {
+                if (params.nodes.length > 0) {
+                    const topicId = params.nodes[0];
+                    const node = nodes.get(topicId);
+                    showRecommendationForTopic(USER_SUBJECT_ID, node);
+                }
+            });
+
+        })
+        .fail(function(xhr) {
+            $(container).html(`
+                <div class="d-flex flex-column justify-content-center align-items-center h-100">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+                    <p class="mt-3 text-danger">Không thể tải Mạng lưới Tri thức. Vui lòng kiểm tra lỗi server (Lỗi: ${xhr.statusText || xhr.status}).</p>
+                </div>
+            `);
+        });
+    }
+
+
+    /**
+     * HÀM PHÂN TRANG/ẨN BỚT (MỚI)
+     */
+    function toggleView(listSelector, limit, buttonSelector) {
+        const items = $(`${listSelector} > a`);
+        const isCollapsed = $(buttonSelector).text().includes('Ẩn bớt');
+
+        if (isCollapsed) {
+            items.slice(limit).hide();
+            $(buttonSelector).text('Xem tất cả').removeClass('btn-outline-secondary').addClass('btn-primary');
+        } else {
+            items.show();
+            $(buttonSelector).text('Ẩn bớt').removeClass('btn-primary').addClass('btn-outline-secondary');
+        }
+    }
+
+
+    /**
+     * GIAI ĐOẠN 2: TƯƠNG TÁC VÀ ĐỀ XUẤT THÔNG MINH
+     */
+    function showRecommendationForTopic(userSubjectId, node) {
+        const modalTitle = $("#recommendationTitle");
+        const modalBody = $("#recommendationBody");
+
+        modalTitle.text(`Chủ đề: ${node.label}`);
+
+        modalBody.html('<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"></div></div> <p class="text-center mt-2">AI đang phân tích...</p>');
+        recommendationModal.show();
+
+        // TRƯỜNG HỢP 1: GIỎI HOẶC CHƯA BẮT ĐẦU (Không cần gọi AI)
+        if (node.group === 'mastered') {
+            modalBody.html('<div class="congrats-message">🎉 Chủ đề này bạn đã thông thạo! Tiếp tục phát huy nhé.</div>');
+            return;
+        }
+
+        if (node.group === 'not_started') {
+            modalBody.html('<div class="ai-message text-center">💡 Chủ đề này chưa có dữ liệu làm bài. Bạn có thể tạo một bài Quiz về **' + node.label + '** hoặc xem tài liệu liên quan!</div>');
+            return;
+        }
+
+        // KỊCH BẢN 2: YẾU (ĐỎ/VÀNG) -> GỌI API ADAPTIVE
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/adaptive/recommendation/${userSubjectId}`
+        })
+        .done(function(data) {
+             buildRecommendationUI(modalBody, data);
+        })
+        .fail(function(xhr) {
+             modalBody.html(`<div class="ai-error-message">Lỗi khi lấy đề xuất AI: ${xhr.statusText}</div>`);
+        });
+
+    }
+
+    /**
+     * HÀM "VẼ" THẺ ĐỀ XUẤT (Sao chép từ dashboard)
+     */
+    function buildRecommendationUI(containerElement, data) {
+        let html = '';
+
+        if (data.recommendationProvided) {
+            const content = data.recommendedContent;
+            let videoThumbnail = '';
+            if (content.contentType === 'VIDEO' && content.urlOrData && content.urlOrData.includes('youtube.com')) {
+                try {
+                    const url = new URL(content.urlOrData);
+                    const videoId = url.searchParams.get('v');
+                    if(videoId) { videoThumbnail = `<img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" class="img-fluid rounded mb-2" alt="Video thumbnail">`; }
+                } catch(e) {}
+            }
+            html = `
+                <div class="header">🌟 Gợi ý từ Trợ lý AI</div>
+                <div class="ai-message">
+                    "${data.recommendationText}"
+                </div>
+                <a href="${content.urlOrData}" target="_blank" class="content-card">
+                    ${videoThumbnail}
+                    <div class="content-type">${content.contentType}</div>
+                    <div class="content-title">${content.title}</div>
+                    <div class="content-duration">⏱️ Ước tính: ${content.estimatedDurationMinutes} phút</div>
+                </a>
+            `;
+        }
+        else {
+            html = `
+                <div class="header">🎉 Thông báo từ AI</div>
+                <div class="congrats-message">
+                    ${data.recommendationText}
+                </div>
+            `;
+        }
+        containerElement.html(html);
     }
 </script>
 </body>

@@ -1,3 +1,4 @@
+// Đặt tại: src/main/java/com/example/smartlearning/controller/SubjectContentController.java
 package com.example.smartlearning.controller;
 
 import com.example.smartlearning.dto.SubjectContentDTO;
@@ -16,12 +17,7 @@ public class SubjectContentController {
     @Autowired
     private SubjectContentService subjectContentService;
 
-    /**
-     * API Lấy tất cả nội dung (Plans, Quizzes, Sets)
-     * cho một môn học đã đăng ký
-     * URL: GET /api/my-subject/{userSubjectId}
-     */
-    @GetMapping("/my-subject/{userSubjectId}")
+    @GetMapping("/my-subject/{userSubjectId}/content")
     public ResponseEntity<SubjectContentDTO> getSubjectContent(
             @PathVariable Integer userSubjectId) {
 

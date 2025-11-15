@@ -9,4 +9,6 @@ public interface QuizQuestionsRepository extends JpaRepository<QuizQuestions, In
 
     // Tự động tìm tất cả câu hỏi thuộc về một quizId
     List<QuizQuestions> findByQuiz_QuizId(Integer quizId);
+    long countByTopic_TopicId(Integer topicId);
+    int countByQuiz_QuizId(Integer quizId);
 }

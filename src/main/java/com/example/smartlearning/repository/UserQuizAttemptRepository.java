@@ -4,10 +4,10 @@ package com.example.smartlearning.repository;
 import com.example.smartlearning.model.UserQuizAttempt;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface UserQuizAttemptRepository extends JpaRepository<UserQuizAttempt, Integer> {
 
-    /**
-     * Đếm xem UserSubject này đã có bao nhiêu lần làm bài (attempts)
-     */
     long countByUserSubject_Id(Integer userSubjectId);
+    Optional<UserQuizAttempt> findTopByUserSubject_IdAndQuiz_QuizIdOrderByAttemptTimeDesc(Integer userSubjectId, Integer quizId);
 }

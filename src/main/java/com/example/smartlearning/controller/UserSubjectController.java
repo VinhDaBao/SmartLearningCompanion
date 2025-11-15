@@ -1,3 +1,4 @@
+// Đặt tại: src/main/java/com/example/smartlearning/controller/UserSubjectController.java
 package com.example.smartlearning.controller;
 
 import com.example.smartlearning.dto.EnrollRequestDTO;
@@ -9,7 +10,7 @@ import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*; // Đảm bảo đã import đủ
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +24,29 @@ public class UserSubjectController {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    /**
+     * API Lấy chi tiết MỘT môn học user đã đăng ký
+     * (Bao gồm plans, quizzes, flashcards)
+     * URL: GET /api/my-subject/{userSubjectId}
+     *
+     * ĐÂY CHÍNH LÀ API MÀ TRANG my-subject.html CẦN ĐỂ HOẠT ĐỘNG
+     */
+    @GetMapping("/my-subject/{userSubjectId}")
+    public ResponseEntity<UserSubjectDTO> getEnrolledSubjectDetails(@PathVariable Integer userSubjectId) {
+
+        // 1. Gọi service để lấy Entity (Giả định entity này đã liên kết
+        //    với StudyPlans, Quizzes, FlashcardSets qua @OneToMany)
+        UserSubject userSubject = userSubjectService.getEnrolledSubjectDetails(userSubjectId);
+
+        // 2. Chuyển Entity sang DTO
+        // (ModelMapper sẽ tự động map các list con nếu DTO của bạn
+        // được định nghĩa để chứa các list đó)
+        UserSubjectDTO dto = modelMapper.map(userSubject, UserSubjectDTO.class);
+
+        // 3. Trả về cho frontend
+        return ResponseEntity.ok(dto);
+    }
 
     /**
      * API Lấy TẤT CẢ các môn user ĐÃ ĐĂNG KÝ

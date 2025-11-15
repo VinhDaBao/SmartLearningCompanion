@@ -349,6 +349,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -363,12 +365,7 @@ public class AiGenerationService {
     @Value("${google.gemini.api.model}")
     private String aiModelUsed;
 
-    @Value("${google.search.api.url}")
-    private String googleSearchApiUrl;
-
-    @Value("${google.search.api.key}")
-    private String googleSearchApiKey;
-
+    
     @Autowired
     PDFService pdfService;
 
@@ -588,52 +585,21 @@ public class AiGenerationService {
     }
 
     public VideoSuggestionDTO googleSearchAndSuggestVideo(String topic) {
-        System.out.println("--- BẮT ĐẦU TÌM VIDEO CHO: " + topic + " ---");
+        System.out.println("--- GỢI Ý VIDEO YOUTUBE CHO: " + topic + " ---");
+        String safeTopic = (topic == null || topic.isBlank())
+                ? "Java programming tutorial for beginners"
+                : topic.trim();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("X-API-Key", googleSearchApiKey);
+        String searchText = "học " + safeTopic + " cho người mới bắt đầu";
+        String encoded = URLEncoder.encode(searchText, StandardCharsets.UTF_8);
+        String youtubeSearchUrl = "https://www.youtube.com/results?search_query=" + encoded;
 
-        GoogleSearchRequestDTO requestBody = new GoogleSearchRequestDTO();
-        requestBody.setQueries(List.of("youtube video " + topic + " tutorial for beginners"));
+        VideoSuggestionDTO dto = new VideoSuggestionDTO();
+        dto.setTitle("Xem video YouTube về: " + searchText);
+        dto.setEmbedUrl(youtubeSearchUrl);
 
-        HttpEntity<GoogleSearchRequestDTO> httpEntity;
-        try {
-            httpEntity = new HttpEntity<>(requestBody, headers);
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi serialize request body: " + e.getMessage());
-        }
-
-        try {
-            GoogleSearchResponseDTO response = restTemplate.postForObject(
-                    googleSearchApiUrl, httpEntity, GoogleSearchResponseDTO.class
-            );
-
-            if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
-                for (GoogleSearchResponseDTO.SearchResultItem item : response.getResults()) {
-                    if (item.getUrl() != null && item.getUrl().contains("youtube.com/watch")) {
-                        VideoSuggestionDTO suggestion = new VideoSuggestionDTO();
-                        suggestion.setTitle(item.getSource_title());
-
-                        String videoId = extractYouTubeVideoId(item.getUrl());
-                        if (videoId != null) {
-                            suggestion.setEmbedUrl("https://www.youtube.com/embed/" + videoId);
-                            return suggestion;
-                        }
-                    }
-                }
-            }
-            throw new RuntimeException("Không tìm thấy kết quả YouTube hợp lệ.");
-
-        } catch (Exception e) {
-            System.err.println("Lỗi khi gọi Google Search API: " + e.getMessage());
-            VideoSuggestionDTO errorDTO = new VideoSuggestionDTO();
-            errorDTO.setTitle("Lỗi: " + e.getMessage());
-            errorDTO.setEmbedUrl("");
-            return errorDTO;
-        }
+        return dto;
     }
-
     private String extractYouTubeVideoId(String youtubeUrl) {
         String videoId = null;
         Pattern pattern = Pattern.compile("v=([a-zA-Z0-9_-]{11})");

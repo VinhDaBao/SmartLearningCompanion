@@ -2,8 +2,8 @@ package com.example.smartlearning.dto.ai;
 
 import lombok.Data;
 
-@Data // Dùng để Jackson parse JSON
+@Data
 public class AiFlashcardDTO {
-    private String front; // Mặt trước
-    private String back;  // Mặt sau
+    private String frontText;
+    private String backText;
 }

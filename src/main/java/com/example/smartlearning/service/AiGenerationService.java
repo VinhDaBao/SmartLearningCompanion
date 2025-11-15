@@ -1,23 +1,21 @@
 package com.example.smartlearning.service;
 
+import com.google.genai.Client;
+import com.google.genai.types.Content;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
 
 import com.example.smartlearning.dto.FlashcardDTO;
-// MỚI: Thêm các import bị thiếu
-import com.example.smartlearning.dto.ai.ChatMessageDTO;
-import com.example.smartlearning.dto.ai.OpenAiRequestDTO;
-import com.example.smartlearning.dto.ai.OpenAiResponseDTO;
 import com.example.smartlearning.model.Subject;
 import com.example.smartlearning.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -26,27 +24,40 @@ import java.util.List;
 @Service
 public class AiGenerationService {
 
-    // --- PHẦN BỊ THIẾU MÀ TÔI ĐÃ BỔ SUNG ---
+    @Value("${google.gemini.api.key}")
+    private String geminiApiKey;
+
+    @Value("${google.gemini.api.model}")
+    private String aiModelUsed;
+
     @Autowired
-    private RestTemplate restTemplate; // Bean để gọi API
+    PDFService pdfService;
 
-    @Value("${openai.api.key}")
-    private String openApiKey; // Key từ application.properties
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${openai.api.url}")
-    private String openApiUrl; // URL từ application.properties
-    // --- KẾT THÚC BỔ SUNG ---
+    private Client geminiClient;
 
-    /**
-     * Tạo một Lộ trình học (Study Plan) bằng cách gọi AI.
-     * (TÔI ĐÃ SỬA LẠI HÀM NÀY ĐỂ GỌI API THẬT, thay vì chỉ mock)
-     */
+    @PostConstruct
+    public void init() {
+        this.geminiClient = Client.builder()
+                .apiKey(this.geminiApiKey)
+                .build();
+    }
+
+    public String getAiModelUsed() {
+        return aiModelUsed;
+    }
+
+    private String extractJsonString(String rawText) {
+        if (rawText == null) return null;
+        return rawText.trim();
+    }
+
     public String generateStudyPlan(User user,
                                     Subject subject,
                                     String customPrompt,
                                     String lectureText) {
 
-        // 1. Tạo Prompt
         String systemPrompt = "Bạn là một trợ lý học tập thông minh. Hãy tạo một lộ trình học chi tiết. Hãy trả về kết quả dưới dạng Markdown.";
 
         StringBuilder userPromptBuilder = new StringBuilder();
@@ -58,67 +69,49 @@ public class AiGenerationService {
                         user.getLearningStyle()
                 )
         );
-
         if (customPrompt != null && !customPrompt.isBlank()) {
             userPromptBuilder.append("Yêu cầu thêm từ sinh viên: ").append(customPrompt).append("\n");
         }
-
         if (lectureText != null && !lectureText.isBlank()) {
             userPromptBuilder.append(
-                    "\nDưới đây là nội dung bài giảng / slide mà giảng viên cung cấp. " +
-                            "Hãy dựa sát vào nội dung này để xây dựng lộ trình học, chia theo buổi/tuần cho hợp lý:\n"
+                    "\nDưới đây là nội dung bài giảng / slide, hãy dựa vào đây để xây dựng lộ trình:\n"
             );
             userPromptBuilder.append(lectureText);
         }
-
         String userPrompt = userPromptBuilder.toString();
 
-        System.out.println("--- GỬI PROMPT TỚI AI (StudyPlan) ---");
-        System.out.println(systemPrompt + "\n" + userPrompt);
-
-        // 2. GỌI API BÊN NGOÀI (OpenAI) - giữ nguyên phần còn lại
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openApiKey);
-
-        OpenAiRequestDTO requestBody = new OpenAiRequestDTO(
-                "gpt-4o-mini",
-                List.of(
-                        new ChatMessageDTO("system", systemPrompt),
-                        new ChatMessageDTO("user", userPrompt)
-                )
-        );
-
-        HttpEntity<OpenAiRequestDTO> httpEntity = new HttpEntity<>(requestBody, headers);
+        System.out.println("--- GỬI PROMPT TỚI GEMINI (StudyPlan) bằng SDK ---");
 
         try {
-            OpenAiResponseDTO response = restTemplate.postForObject(
-                    openApiUrl, httpEntity, OpenAiResponseDTO.class
-            );
+            Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
-            if (response != null && response.getChoices() != null && !response.getChoices().isEmpty()) {
-                return response.getChoices().get(0).getMessage().getContent();
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .systemInstruction(systemInstruction)
+                    .responseMimeType("text/plain")
+                    .build();
+
+            GenerateContentResponse response = this.geminiClient.models
+                    .generateContent(this.aiModelUsed, userPrompt, config);
+
+            String content = response.text();
+
+            if (content != null && !content.isEmpty()) {
+                return content;
             } else {
-                throw new RuntimeException("AI response is empty or invalid.");
+                throw new RuntimeException("Gemini response is empty or invalid.");
             }
-
         } catch (Exception e) {
-            System.err.println("Lỗi khi gọi OpenAI API (StudyPlan): " + e.getMessage());
-            // Trả về mock data nếu API lỗi
+            System.err.println("Lỗi khi gọi Gemini API (StudyPlan) bằng SDK: " + e.getMessage());
+            String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "# Lộ trình học " + subject.getSubjectName() + " (Mock Fallback)\n\n" +
-                    "**Tuần 1: Giới thiệu**\n" +
-                    "* API call failed. This is mock data.";
+                    "**API Lỗi:**\n" +
+                    "* " + safeErrorMessage;
         }
     }
 
 
-    /**
-     * Tạo một bộ Quiz bằng cách gọi AI.
-     * (Code của bạn ở đây đã OK, chỉ thiếu các trường khai báo)
-     */
     public String generateQuiz(User user, Subject subject, String topic, int numQuestions, String lectureText) {
 
-        // 1. Tạo Prompt
         String systemPrompt = String.format(
                 "Bạn là một trợ lý học tập, chuyên tạo câu hỏi quiz. Hãy tạo %d câu hỏi trắc nghiệm.\n" +
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
@@ -131,83 +124,90 @@ public class AiGenerationService {
                         "}", numQuestions
         );
 
-        String userPrompt = String.format(
-                "Chủ đề quiz: %s (cho môn %s).\n" +
-                        "Phong cách học của sinh viên: %s.",
-                (topic != null ? topic : "Tổng quan môn học"),
-                subject.getSubjectName(),
-                user.getLearningStyle()
-        );
+        String userPrompt;
+        boolean hasFile = lectureText != null && !lectureText.isBlank();
+        boolean hasTopic = topic != null && !topic.isBlank();
 
-        System.out.println("--- GỬI PROMPT TỚI AI (QUIZ) ---");
-        System.out.println(systemPrompt + "\n" + userPrompt);
+        if (hasFile && hasTopic) {
+            userPrompt = String.format(
+                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
+                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
+                            "VÀ MỘT CHỦ ĐỀ: '%s'. " +
+                            "HÃY LÀM THEO CÁC BƯỚC SAU: " +
+                            "1. Đọc tài liệu và xác định xem chủ đề '%s' có được đề cập rõ ràng trong tài liệu không. " +
+                            "2. NẾU KHÔNG TÌM THẤY CHỦ ĐỀ, hãy trả về một chuỗi duy nhất: 'ERROR_TOPIC_NOT_FOUND'. " +
+                            "3. NẾU TÌM THẤY CHỦ ĐỀ, hãy tạo %d câu hỏi trắc nghiệm (A, B, C, D) CHỈ DỰA TRÊN TÀI LIỆU, tập trung vào chủ đề đó.",
+                    lectureText,
+                    topic,
+                    topic,
+                    numQuestions
+            );
+        } else if (hasFile && !hasTopic) {
+            userPrompt = String.format(
+                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
+                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
+                            "Hãy đọc toàn bộ tài liệu và tạo %d câu hỏi trắc nghiệm (A, B, C, D) " +
+                            "dựa trên nội dung tổng quan của tài liệu.",
+                    lectureText,
+                    numQuestions
+            );
+        } else {
+            userPrompt = String.format(
+                    "Chủ đề quiz: %s (cho môn %s).\n" +
+                            "Phong cách học của sinh viên: %s.",
+                    (topic != null ? topic : "Tổng quan môn học"),
+                    subject.getSubjectName(),
+                    user.getLearningStyle()
+            );
+        }
 
-        // 2. GỌI API BÊN NGOÀI (OpenAI)
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openApiKey);
-
-        OpenAiRequestDTO requestBody = new OpenAiRequestDTO(
-                "gpt-4o-mini",
-                List.of(
-                        new ChatMessageDTO("system", systemPrompt),
-                        new ChatMessageDTO("user", userPrompt)
-                )
-        );
-
-        HttpEntity<OpenAiRequestDTO> httpEntity = new HttpEntity<>(requestBody, headers);
+        System.out.println("--- GỬI PROMPT TỚI GEMINI (QUIZ) bằng SDK ---");
 
         try {
-            OpenAiResponseDTO response = restTemplate.postForObject(
-                    openApiUrl, httpEntity, OpenAiResponseDTO.class
-            );
+            Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
-            if (response != null && response.getChoices() != null && !response.getChoices().isEmpty()) {
-                return response.getChoices().get(0).getMessage().getContent();
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .systemInstruction(systemInstruction)
+                    .responseMimeType("application/json")
+                    .build();
+
+            GenerateContentResponse response = this.geminiClient.models
+                    .generateContent(this.aiModelUsed, userPrompt, config);
+
+            String jsonContent = response.text();
+
+            if (jsonContent != null && !jsonContent.isEmpty()) {
+                return jsonContent;
             } else {
-                throw new RuntimeException("AI response is empty or invalid.");
+                throw new RuntimeException("Gemini response is empty or invalid (JSON).");
             }
-
         } catch (Exception e) {
-            System.err.println("Lỗi khi gọi OpenAI API (Quiz): " + e.getMessage());
+            System.err.println("Lỗi khi gọi Gemini API (Quiz) bằng SDK: " + e.getMessage());
             System.err.println("Sử dụng dữ liệu Quiz giả lập (Mock)");
+
+            String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "[ \n" +
                     "  { \n" +
-                    "    \"questionText\": \"Câu hỏi giả lập 1: Spring Boot là gì?\", \n" +
-                    "    \"options\": {\"A\": \"Framework\", \"B\": \"Thư viện\", \"C\": \"Ứng dụng\", \"D\": \"Ngôn ngữ\"}, \n" +
+                    "    \"questionText\": \"Câu hỏi giả lập 1: API gặp lỗi\", \n" +
+                    "    \"options\": {\"A\": \"Đáp án A\", \"B\": \"Đáp án B\", \"C\": \"Đáp án C\", \"D\": \"Đáp án D\"}, \n" +
                     "    \"correctAnswer\": \"A\", \n" +
-                    "    \"explanation\": \"Spring Boot là một framework. (Đây là mock data)\" \n" +
-                    "  }, \n" +
-                    "  { \n" +
-                    "    \"questionText\": \"Câu hỏi giả lập 2: @RestController dùng để làm gì?\", \n" +
-                    "    \"options\": {\"A\": \"Service\", \"B\": \"Component\", \"C\": \"API Controller\", \"D\": \"Entity\"}, \n" +
-                    "    \"correctAnswer\": \"C\", \n" +
-                    "    \"explanation\": \"Nó kết hợp @Controller và @ResponseBody. (Đây là mock data)\" \n" +
+                    "    \"explanation\": \"Đây là dữ liệu giả lập do không thể gọi API. Lỗi: " + safeErrorMessage + "\" \n" +
                     "  } \n" +
                     "]";
         }
     }
 
-    // --- LỖI CÚ PHÁP Ở ĐÂY ---
-    // (Tôi đã xóa Javadoc lỗi và dấu '*/' bị thừa của bạn ở đây)
 
-    /**
-     * Tạo một bộ Flashcard bằng cách gọi AI.
-     * @return Một chuỗi JSON (String) chứa danh sách các thẻ.
-     */
     public String generateFlashcards(User user, Subject subject, String topic, int numCards) {
-
-        // 1. Tạo Prompt
         String systemPrompt = String.format(
                 "Bạn là một trợ lý học tập, chuyên tạo flashcards. Hãy tạo %d flashcard.\n" +
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
                         "Định dạng JSON cho mỗi đối tượng trong mảng phải là:\n" +
                         "{\n" +
-                        "  \"front\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
-                        "  \"back\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
-                        "}", 1
+                        "  \"frontText\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
+                        "  \"backText\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
+                        "}", numCards
         );
-
         String userPrompt = String.format(
                 "Chủ đề: %s (cho môn %s).\n" +
                         "Phong cách học của sinh viên: %s.\n" +
@@ -217,109 +217,83 @@ public class AiGenerationService {
                 user.getLearningStyle()
         );
 
-        // 2. GỌI API BÊN NGOÀI (OpenAI)
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openApiKey);
-
-        OpenAiRequestDTO requestBody = new OpenAiRequestDTO(
-                "openai/gpt-4o",
-                List.of(
-                        new ChatMessageDTO("system", systemPrompt),
-                        new ChatMessageDTO("user", userPrompt)
-                )
-        );
-
-        HttpEntity<OpenAiRequestDTO> httpEntity = new HttpEntity<>(requestBody, headers);
+        System.out.println("--- GỬI PROMPT TỚI GEMINI (Flashcard) bằng SDK ---");
 
         try {
-            OpenAiResponseDTO response = restTemplate.postForObject(
-                    openApiUrl, httpEntity, OpenAiResponseDTO.class
-            );
+            Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
-            if (response != null && response.getChoices() != null && !response.getChoices().isEmpty()) {
-                return response.getChoices().get(0).getMessage().getContent();
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .systemInstruction(systemInstruction)
+                    .responseMimeType("application/json")
+                    .build();
+
+            GenerateContentResponse response = this.geminiClient.models
+                    .generateContent(this.aiModelUsed, userPrompt, config);
+
+            String jsonContent = response.text();
+
+            if (jsonContent != null && !jsonContent.isEmpty()) {
+                return jsonContent;
             } else {
-                throw new RuntimeException("AI response is empty or invalid.");
+                throw new RuntimeException("Gemini response is empty or invalid (JSON).");
             }
-
         } catch (Exception e) {
-            System.err.println("Lỗi khi gọi OpenAI API (Flashcard): " + e.getMessage());
+            System.err.println("Lỗi khi gọi Gemini API (Flashcard) bằng SDK: " + e.getMessage());
             System.err.println("Sử dụng dữ liệu Flashcard giả lập (Mock)");
+
+            String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "[ \n" +
                     "  { \n" +
-                    "    \"front\": \"@Service (Mock)\", \n" +
-                    "    \"back\": \"Một annotation đánh dấu lớp logic nghiệp vụ. (Mock)\" \n" +
-                    "  }, \n" +
-                    "  { \n" +
-                    "    \"front\": \"@Autowired (Mock)\", \n" +
-                    "    \"back\": \"Annotation dùng để tiêm (inject) dependency. (Mock)\" \n" +
+                    "    \"frontText\": \"Flashcard giả lập (Lỗi API)\", \n" +
+                    "    \"backText\": \"Không thể tạo flashcard. Lỗi: " + safeErrorMessage + "\" \n" +
                     "  } \n" +
                     "]";
         }
     }
-    @Autowired
-    PDFService pdfService;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+
     public List<FlashcardDTO> generateFlashcardsForChunk(String chunk, int numCards) {
 
         String systemPrompt =
-                "Bạn là trợ lý tạo flashcard. Hãy tạo đúng số lượng flashcards yêu cầu.\n" +
-                "Luôn trả về kết quả dưới dạng JSON Array.\n" +
-                "Ví dụ: [{\"front\":\"...\", \"back\":\"...\"}]";
-
+                "Bạn là trợ lý tạo flashcard. Hãy tạo đúng " + numCards + " flashcards.\n" +
+                        "Luôn trả về kết quả dưới dạng JSON Array.\n" +
+                        "Ví dụ: [{\"front\":\"...\", \"back\":\"...\"}]";
         String userPrompt =
                 "Tạo " + numCards + " flashcards dựa trên nội dung:\n\n" +
-                chunk;
-
-
-        // Tùy vào DTO của bạn (mình viết cấu trúc chuẩn)
-        ChatMessageDTO msgSystem = new ChatMessageDTO("system", systemPrompt);
-        ChatMessageDTO msgUser = new ChatMessageDTO("user", userPrompt);
-
-        OpenAiRequestDTO request = new OpenAiRequestDTO(
-                "gpt-4o-mini",
-                List.of(msgSystem, msgUser)
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(openApiKey);
-
-        HttpEntity<OpenAiRequestDTO> entity = new HttpEntity<>(request, headers);
+                        chunk;
 
         try {
-            OpenAiResponseDTO response =
-                    restTemplate.postForObject(openApiUrl, entity, OpenAiResponseDTO.class);
+            Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
 
-            String json = response.getChoices().get(0).getMessage().getContent();
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .systemInstruction(systemInstruction)
+                    .responseMimeType("application/json")
+                    .build();
+
+            GenerateContentResponse response = this.geminiClient.models
+                    .generateContent(this.aiModelUsed, userPrompt, config);
+
+            String json = response.text();
 
             return mapper.readValue(json, new TypeReference<List<FlashcardDTO>>() {});
-
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi OpenAI: " + e.getMessage());
+            System.err.println("Lỗi Gemini (Chunk PDF) bằng SDK: " + e.getMessage());
+            return new ArrayList<>();
         }
     }
+
     public List<FlashcardDTO> generateFlashcardsFromLargePdf(
             MultipartFile pdfFile,
             int totalCards
     ) {
-
         String text = pdfService.extractTextFromPdf(pdfFile);
-
         List<String> chunks = pdfService.splitTextIntoChunks(text, 10000);
-
-        int cardsPerChunk = Math.max(3, totalCards / chunks.size());
-
+        int cardsPerChunk = Math.max(3, (chunks.isEmpty() ? totalCards : totalCards / chunks.size()));
         List<FlashcardDTO> allCards = new ArrayList<>();
-
         for (String chunk : chunks) {
             List<FlashcardDTO> part = generateFlashcardsForChunk(chunk, cardsPerChunk);
             allCards.addAll(part);
         }
-
         return allCards;
     }
-
 }

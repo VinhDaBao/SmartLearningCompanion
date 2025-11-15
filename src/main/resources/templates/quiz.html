@@ -190,6 +190,10 @@
         });
     }
 
+    function escapeHtml(text) {
+        return $('<div>').text(text).html();
+    }
+
     function renderQuestions(questions) {
         const carouselInner = $("#carouselInner");
         carouselInner.empty();
@@ -200,9 +204,10 @@
 
             const options = q.options;
             for (const key in options) {
+                const safeOptionText = escapeHtml(options[key]);
                 optionsHtml += `
                     <button class="btn btn-outline-primary quiz-option" data-question-id="${q.questionId}" data-option-key="${key}">
-                        <strong>${key}.</strong> ${options[key]}
+                        <strong>${key}.</strong> ${safeOptionText}
                     </button>
                 `;
             }
@@ -212,7 +217,7 @@
                     <div class="card shadow border-0">
                         <div class="card-body p-4 p-md-5">
                             <h5 class="card-title mb-4">Câu ${index + 1} / ${questions.length}</h5>
-                            <p class="lead" style="min-height: 50px;">${q.questionText}</p>
+                            <p class="lead" style="min-height: 50px;">${escapeHtml(q.questionText)}</p>
                             <hr>
                             <div class="quiz-options-list">
                                 ${optionsHtml}
@@ -268,17 +273,17 @@
 
             let explanation = `
                 <div class="p-3 mb-2 border rounded">
-                    <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${q.questionText}</p>
+                    <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${escapeHtml(q.questionText)}</p>
             `;
 
             if (userAns === correctAns) {
                 score++;
                 explanation += `<p class="mb-1">Bạn đã chọn: <strong>${userAns} (Đúng)</strong></p>`;
             } else {
-                explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-danger">${userAns} (Sai)</strong></p>`;
+                explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-danger">${userAns || "-"} (Sai)</strong></p>`;
                 explanation += `<p class="mb-1">Đáp án đúng: <strong>${correctAns}</strong></p>`;
             }
-            explanation += `<p class="text-muted mb-0"><em>Giải thích: ${q.explanation}</em></p></div>`;
+            explanation += `<p class="text-muted mb-0"><em>Giải thích: ${escapeHtml(q.explanation || "")}</em></p></div>`;
             explanationsHtml.push(explanation);
         });
 

@@ -63,6 +63,12 @@
 <!--            border-radius: 999px;-->
 <!--        }-->
 
+<!--        #videoResult iframe {-->
+<!--            width: 100%;-->
+<!--            height: 315px;-->
+<!--            border-radius: 0.5rem;-->
+<!--        }-->
+
 <!--        @media (max-width: 768px) {-->
 <!--            .subject-card {-->
 <!--                flex-direction: column;-->
@@ -391,6 +397,35 @@
 <!--    </div>-->
 <!--</div>-->
 
+<!--<div class="modal fade" id="videoModal" tabindex="-1">-->
+<!--    <div class="modal-dialog modal-lg">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title"><i class="bi bi-youtube text-danger"></i> Gợi ý Video YouTube</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="videoForm">-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="videoTopic" class="form-label">Chủ đề video:</label>-->
+<!--                        <div class="input-group">-->
+<!--                            <input type="text" class="form-control" id="videoTopic" required placeholder="Ví dụ: Spring Boot JWT">-->
+<!--                            <button type="submit" class="btn btn-danger" id="submitVideoSearch">-->
+<!--                                <span class="loading-spinner" role="status"></span>-->
+<!--                                <i class="bi bi-search"></i> Tìm-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--                <hr>-->
+<!--                <div id="videoResult" class="text-center">-->
+<!--                    <p class="text-muted">Nhập chủ đề và nhấn tìm kiếm...</p>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
 <!--<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">-->
 <!--</div>-->
 
@@ -407,6 +442,7 @@
 <!--    let quizModal = null;-->
 <!--    let flashcardModal = null;-->
 <!--    let logSessionModal = null;-->
+<!--    let videoModal = null;-->
 <!--    let toastCount = 0;-->
 
 <!--    $(document).ready(function() {-->
@@ -428,6 +464,7 @@
 <!--        quizModal = new bootstrap.Modal(document.getElementById('quizModal'));-->
 <!--        flashcardModal = new bootstrap.Modal(document.getElementById('flashcardModal'));-->
 <!--        logSessionModal = new bootstrap.Modal(document.getElementById('logSessionModal'));-->
+<!--        videoModal = new bootstrap.Modal(document.getElementById('videoModal'));-->
 
 <!--        setupFilters();-->
 
@@ -437,6 +474,11 @@
 <!--        $("#submitQuizButton").on("click", handleGenerateQuiz);-->
 <!--        $("#submitFlashcardButton").on("click", handleGenerateFlashcard);-->
 <!--        $("#submitLogButton").on("click", handleLogSession);-->
+
+<!--        $("#videoForm").on("submit", function(e) {-->
+<!--            e.preventDefault();-->
+<!--            handleVideoSearch();-->
+<!--        });-->
 
 <!--        $("#filterForm").on("submit", function(e) {-->
 <!--            e.preventDefault();-->
@@ -583,6 +625,10 @@
 <!--                                    </p>-->
 <!--                                </div>-->
 <!--                                <div class="subject-actions">-->
+<!--                                    <button class="btn btn-outline-danger"-->
+<!--                                            onclick="openVideoModal('${us.subject.subjectName}')">-->
+<!--                                        <i class="bi bi-youtube me-1"></i> Video-->
+<!--                                    </button>-->
 <!--                                    <button class="btn btn-outline-info"-->
 <!--                                            onclick="viewSubjectContent(${us.id})">-->
 <!--                                        <i class="bi bi-book me-1"></i> Học-->
@@ -701,9 +747,15 @@
 <!--        flashcardModal.show();-->
 <!--    }-->
 
+<!--    function openVideoModal(subjectName) {-->
+<!--        $("#videoTopic").val(subjectName);-->
+<!--        $("#videoResult").html('<p class="text-muted">Nhấn tìm kiếm để xem gợi ý...</p>');-->
+<!--        videoModal.show();-->
+<!--    }-->
+
 <!--    function viewSubjectContent(userSubjectId) {-->
-<!--            window.location.href = "/my-subject/" + userSubjectId;-->
-<!--        }-->
+<!--        window.location.href = "/my-subject/" + userSubjectId;-->
+<!--    }-->
 
 <!--    function handleGeneratePlan() {-->
 <!--        const btn = $("#submitPlanButton");-->
@@ -865,6 +917,46 @@
 <!--        });-->
 <!--    }-->
 
+<!--    function handleVideoSearch() {-->
+<!--        const btn = $("#submitVideoSearch");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+<!--        const topic = $("#videoTopic").val();-->
+<!--        const resultDiv = $("#videoResult");-->
+
+<!--        if (!topic) {-->
+<!--            alert("Vui lòng nhập chủ đề!");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        btn.prop('disabled', true); spinner.show();-->
+<!--        resultDiv.html('<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');-->
+
+<!--        $.ajax({-->
+<!--            type: "GET",-->
+<!--            url: `http://localhost:8080/api/ai/suggest-video`,-->
+<!--            data: { topic: topic },-->
+<!--            success: function(data) {-->
+<!--                if (data && data.embedUrl) {-->
+<!--                    const videoHtml = `-->
+<!--                        <h5 class="mb-3">${data.title}</h5>-->
+<!--                        <a href="${data.embedUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-danger mb-3">-->
+<!--                            <i class="bi bi-youtube"></i> Mở trên YouTube-->
+<!--                        </a>-->
+<!--                    `;-->
+<!--                    resultDiv.html(videoHtml);-->
+<!--                } else {-->
+<!--                    resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');-->
+<!--                }-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`);-->
+<!--            },-->
+<!--            complete: function() {-->
+<!--                btn.prop('disabled', false); spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
 <!--    function renderTimeChart(labels, data) {-->
 <!--        if (timeChartInstance) {-->
 <!--            timeChartInstance.destroy();-->
@@ -895,8 +987,42 @@
 
 <!--    function renderActivityChart(activityData) {-->
 <!--        if(activityChartInstance) activityChartInstance.destroy();-->
+
+<!--        const activityLabels = {-->
+<!--            "FLASHCARD_GENERATED": "Tạo Flashcard",-->
+<!--            "QUIZ_GENERATED": "Tạo Quiz",-->
+<!--            "QUIZ_COMPLETED": "Làm Quiz",-->
+<!--            "PLAN_GENERATED": "Tạo Kế hoạch",-->
+<!--            "STUDY_SESSION": "Phiên học",-->
+<!--            "DEFAULT": "Hoạt động khác"-->
+<!--        };-->
+
+<!--        const translatedLabels = Object.keys(activityData).map(key => activityLabels[key] || activityLabels["DEFAULT"]);-->
+<!--        const values = Object.values(activityData);-->
+
+<!--        const backgroundColors = [-->
+<!--            'rgba(0, 123, 255, 0.7)',-->
+<!--            'rgba(40, 167, 69, 0.7)',-->
+<!--            'rgba(255, 193, 7, 0.7)',-->
+<!--            'rgba(220, 53, 69, 0.7)',-->
+<!--            'rgba(108, 117, 125, 0.7)'-->
+<!--        ];-->
+
 <!--        const ctx = document.getElementById('activityChart').getContext('2d');-->
-<!--        activityChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(activityData), datasets: [{ data: Object.values(activityData), backgroundColor: ['rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)', 'rgba(108, 117, 125, 0.7)'] }] }, options: { responsive: true, maintainAspectRatio: false } });-->
+<!--        activityChartInstance = new Chart(ctx, {-->
+<!--            type: 'doughnut',-->
+<!--            data: {-->
+<!--                labels: translatedLabels,-->
+<!--                datasets: [{-->
+<!--                    data: values,-->
+<!--                    backgroundColor: backgroundColors-->
+<!--                }]-->
+<!--            },-->
+<!--            options: {-->
+<!--                responsive: true,-->
+<!--                maintainAspectRatio: false-->
+<!--            }-->
+<!--        });-->
 <!--    }-->
 
 <!--    function showToast(message, type = "success") {-->
@@ -912,7 +1038,7 @@
 <!--                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>-->
 <!--                </div>-->
 <!--            </div>-->
-<!--        `;-->
+<!--       `;-->
 
 <!--        $("#toastContainer").append(toastHtml);-->
 
@@ -927,6 +1053,7 @@
 <!--</script>-->
 <!--</body>-->
 <!--</html>-->
+
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -1036,8 +1163,7 @@
 
     <h1 class="h3 mb-2">Chào mừng trở lại, <span id="userNameHeader" class="text-primary"></span>!</h1>
 
-    <div id="studyNotification" class="mb-3">
-    </div>
+    <div id="studyNotification" class="mb-3"></div>
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
@@ -1133,7 +1259,12 @@
     </div>
 
     <hr class="my-4">
-    <h2><i class="bi bi-search text-warning"></i> Khám phá môn học</h2>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0"><i class="bi bi-search text-warning"></i> Khám phá môn học</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
+            <i class="bi bi-plus-circle"></i> Tự tạo môn học
+        </button>
+    </div>
     <div class="row" id="exploreSubjectsList">
         <div class="col-12 text-center" id="exploreSubjectsLoading">
             <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -1355,9 +1486,41 @@
     </div>
 </div>
 
-<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+<div class="modal fade" id="createSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Tự tạo môn học mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSubjectForm">
+                    <div class="mb-3">
+                        <label for="newSubjectName" class="form-label">Tên môn học</label>
+                        <input type="text" class="form-control" id="newSubjectName" required placeholder="Ví dụ: Lập trình Web với Spring Boot">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSubjectCategory" class="form-label">Nhóm môn</label>
+                        <input type="text" class="form-control" id="newSubjectCategory" placeholder="Ví dụ: Lập trình Backend">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSubjectDescription" class="form-label">Mô tả (tuỳ chọn)</label>
+                        <textarea class="form-control" id="newSubjectDescription" rows="3" placeholder="Tóm tắt nội dung môn học"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" id="createSubjectButton">
+                    <span class="loading-spinner" role="status"></span>
+                    <i class="bi bi-check-circle"></i> Tạo môn học
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1372,7 +1535,9 @@
     let flashcardModal = null;
     let logSessionModal = null;
     let videoModal = null;
+    let createSubjectModal = null;
     let toastCount = 0;
+    let allSubjectsCache = [];
 
     $(document).ready(function() {
         const token = localStorage.getItem("jwtToken");
@@ -1394,6 +1559,7 @@
         flashcardModal = new bootstrap.Modal(document.getElementById('flashcardModal'));
         logSessionModal = new bootstrap.Modal(document.getElementById('logSessionModal'));
         videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+        createSubjectModal = new bootstrap.Modal(document.getElementById('createSubjectModal'));
 
         setupFilters();
 
@@ -1408,6 +1574,8 @@
             e.preventDefault();
             handleVideoSearch();
         });
+
+        $("#createSubjectButton").on("click", handleCreateSubject);
 
         $("#filterForm").on("submit", function(e) {
             e.preventDefault();
@@ -1431,7 +1599,6 @@
         const mm = today.getMonth() + 1;
 
         $("#filterDate").val(today.toISOString().split('T')[0]);
-
         $("#filterMonth").val(mm);
 
         const yearSelects = $("#filterYearMonth, #filterYear");
@@ -1526,7 +1693,7 @@
         $("#exploreSubjectsLoading").show();
         $("#noMySubjects").hide();
 
-        const  Div = $("#mySubjectsList");
+        const mySubjectsListDiv = $("#mySubjectsList");
         const exploreSubjectsListDiv = $("#exploreSubjectsList");
         const logSubjectSelect = $("#logSubject");
 
@@ -1586,6 +1753,7 @@
             }
 
             const allSubjects = await $.ajax({ url: "http://localhost:8080/api/subjects" });
+            allSubjectsCache = allSubjects || [];
 
             let exploreCount = 0;
             allSubjects.forEach(subject => {
@@ -1683,8 +1851,8 @@
     }
 
     function viewSubjectContent(userSubjectId) {
-            window.location.href = "/my-subject/" + userSubjectId;
-        }
+        window.location.href = "/my-subject/" + userSubjectId;
+    }
 
     function handleGeneratePlan() {
         const btn = $("#submitPlanButton");
@@ -1866,20 +2034,15 @@
             data: { topic: topic },
             success: function(data) {
                 if (data && data.embedUrl) {
-                     const videoHtml = `
+                    const videoHtml = `
                         <h5 class="mb-3">${data.title}</h5>
-                        <div class="ratio ratio-16x9">
-                             <iframe src="${data.embedUrl}"
-                                     title="${data.title}"
-                                     frameborder="0"
-                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                     allowfullscreen>
-                             </iframe>
-                        </div>
+                        <a href="${data.embedUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-danger mb-3">
+                            <i class="bi bi-youtube"></i> Mở trên YouTube
+                        </a>
                     `;
                     resultDiv.html(videoHtml);
                 } else {
-                     resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');
+                    resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');
                 }
             },
             error: function(xhr) {
@@ -1887,6 +2050,66 @@
             },
             complete: function() {
                 btn.prop('disabled', false); spinner.hide();
+            }
+        });
+    }
+
+    function normalizeSubjectName(name) {
+        return name.trim().toLowerCase();
+    }
+
+    function handleCreateSubject() {
+        const btn = $("#createSubjectButton");
+        const spinner = btn.find(".loading-spinner");
+
+        const name = $("#newSubjectName").val().trim();
+        const category = $("#newSubjectCategory").val().trim();
+        const description = $("#newSubjectDescription").val().trim();
+
+        if (!name) {
+            alert("Vui lòng nhập tên môn học.");
+            return;
+        }
+
+        const existsInCache = allSubjectsCache.some(s =>
+            normalizeSubjectName(s.subjectName || "") === normalizeSubjectName(name)
+        );
+
+        if (existsInCache) {
+            showToast("Môn học này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.", "error");
+            return;
+        }
+
+        const payload = {
+            subjectName: name,
+            subjectCategory: category || null,
+            description: description || null
+        };
+
+        btn.prop("disabled", true);
+        spinner.show();
+
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/subjects",
+            contentType: "application/json",
+            data: JSON.stringify(payload),
+            success: function(newSubject) {
+                showToast("Tạo môn học mới thành công!");
+                $("#createSubjectForm")[0].reset();
+                createSubjectModal.hide();
+                loadSubjectsAndEnrollments(currentUserId);
+            },
+            error: function(xhr) {
+                if (xhr.status === 409) {
+                    showToast(xhr.responseText || "Môn học đã tồn tại trong cơ sở dữ liệu.", "error");
+                } else {
+                    showToast("Lỗi khi tạo môn học: " + (xhr.responseText || "Không rõ lỗi"), "error");
+                }
+            },
+            complete: function() {
+                btn.prop("disabled", false);
+                spinner.hide();
             }
         });
     }
@@ -1972,7 +2195,7 @@
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
-        `;
+       `;
 
         $("#toastContainer").append(toastHtml);
 
@@ -1983,7 +2206,6 @@
             $(this).remove();
         });
     }
-
 </script>
 </body>
 </html>

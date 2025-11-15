@@ -46,8 +46,4 @@ public class FlashcardSet {
             generatedAt = LocalDateTime.now();
         }
     }
-    public void addFlashcard(Flashcard card) {
-        this.flashcards.add(card);      // dùng collection mutable (ArrayList)
-        card.setFlashcardSet(this);     // set phía ManyToOne
-    }
 }

@@ -38,6 +38,11 @@ public class FlashcardController {
         // 3. Trả DTO về cho Frontend
         return ResponseEntity.ok(responseDTO);
     }
-    
-    
+    @GetMapping("/{setId}")
+    public ResponseEntity<FlashcardSetDTO> getFlashcardSetById(@PathVariable Integer setId) {
+
+        FlashcardSetDTO setDetails = flashcardService.getFlashcardSetDetails(setId);
+
+        return ResponseEntity.ok(setDetails);
+    }
 }

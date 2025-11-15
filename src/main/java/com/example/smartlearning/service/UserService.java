@@ -1,6 +1,7 @@
 package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.RegisterRequestDTO; // MỚI
+import com.example.smartlearning.dto.UpdateProfileRequestDTO;
 import com.example.smartlearning.model.User;
 import com.example.smartlearning.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,5 +59,25 @@ public class UserService {
 
         // 5. Lưu vào database
         return userRepository.save(newUser);
+    }
+    /**
+     * Cập nhật thông tin hồ sơ (Họ tên và Phong cách học)
+     * @param username Tên user (lấy từ token)
+     * @param dto Dữ liệu mới
+     * @return User (Entity) đã được cập nhật
+     */
+    @Transactional
+    public User updateUserProfile(String username, UpdateProfileRequestDTO dto) {
+
+        // 1. Tìm user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        // 2. Cập nhật các trường
+        user.setFullName(dto.getFullName());
+        user.setLearningStyle(dto.getLearningStyle());
+
+        // 3. Lưu lại vào DB
+        return userRepository.save(user);
     }
 }

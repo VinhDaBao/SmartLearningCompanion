@@ -68,8 +68,8 @@ public class FlashcardService {
             List<Flashcard> cardEntities = aiCards.stream().map(aiCard -> {
                 Flashcard card = new Flashcard();
                 card.setFlashcardSet(newSet);
-                card.setFrontText(aiCard.getFrontText());
-                card.setBackText(aiCard.getBackText());
+                card.setFrontText(aiCard.getFront());
+                card.setBackText(aiCard.getBack());
                 return card;
             }).collect(Collectors.toList());
 

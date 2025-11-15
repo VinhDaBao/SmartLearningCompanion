@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class AiFlashcardDTO {
-    private String frontText;
-    private String backText;
+    private String front;
+    private String back;
 }

@@ -30,19 +30,23 @@ public class StudyPlanService {
 
     /**
      * Logic nghiệp vụ chính: Tạo và lưu một lộ trình học
+
+     * @param requestDTO dữ liệu người dùng gửi
+     * @param lectureText nội dung file bài giảng (có thể null nếu không upload)
      */
     @Transactional
-    public StudyPlan createStudyPlan(StudyPlanRequestDTO requestDTO) {
+    public StudyPlan createStudyPlan(StudyPlanRequestDTO requestDTO, String lectureText) {
 
         // 1. Lấy thông tin User và Subject từ DB
         UserSubject userSubject = userSubjectRepository.findById(requestDTO.getUserSubjectId())
                 .orElseThrow(() -> new RuntimeException("UserSubject not found"));
 
-        // 2. Gọi Service AI để sinh nội dung
+        // 2. Gọi Service AI để sinh nội dung, có thêm lectureText
         String aiContent = aiGenerationService.generateStudyPlan(
                 userSubject.getUser(),
                 userSubject.getSubject(),
-                requestDTO.getCustomPrompt()
+                requestDTO.getCustomPrompt(),
+                lectureText
         );
 
         // 3. Tạo Entity mới
@@ -52,7 +56,6 @@ public class StudyPlanService {
         newStudyPlan.setAiModelUsed("gpt-4o-mini-mock");
 
         // 4. Lưu vào Database
-        // MỚI: Gán vào biến 'savedPlan' để sử dụng ở bước 5
         StudyPlan savedPlan = studyPlanRepository.save(newStudyPlan);
 
         // 5. GHI LOG (MỚI)
@@ -68,6 +71,6 @@ public class StudyPlanService {
             System.err.println("Lỗi ghi log (Plan): " + e.getMessage());
         }
 
-        return savedPlan; // Trả về entity đã được lưu
+        return savedPlan;
     }
 }

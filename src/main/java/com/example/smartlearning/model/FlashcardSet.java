@@ -50,4 +50,5 @@ public class FlashcardSet {
         this.flashcards.add(card);      // dùng collection mutable (ArrayList)
         card.setFlashcardSet(this);     // set phía ManyToOne
     }
+
 }

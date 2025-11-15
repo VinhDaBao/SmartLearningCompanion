@@ -49,7 +49,7 @@ public class AuthController {
         // 1. Gọi service để thực hiện logic đăng nhập
         // Service sẽ kiểm tra user/pass và tạo token
         AuthResponseDTO authResponse = authService.login(loginRequest);
-        
+
         // 2. Trả về DTO chứa token
         return ResponseEntity.ok(authResponse);
     }

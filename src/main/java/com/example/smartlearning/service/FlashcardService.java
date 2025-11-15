@@ -1,15 +1,16 @@
 package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.FlashcardRequestDTO;
+import com.example.smartlearning.dto.FlashcardSetDTO;
 import com.example.smartlearning.dto.ai.AiFlashcardDTO;
 import com.example.smartlearning.model.Flashcard;
 import com.example.smartlearning.model.FlashcardSet;
 import com.example.smartlearning.model.UserSubject;
-import com.example.smartlearning.repository.FlashcardRepository;
 import com.example.smartlearning.repository.FlashcardSetRepository;
 import com.example.smartlearning.repository.UserSubjectRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// MỚI: Import service log
 import com.example.smartlearning.service.LearningLogService;
 
 @Service
@@ -27,9 +27,6 @@ public class FlashcardService {
     private FlashcardSetRepository flashcardSetRepository;
 
     @Autowired
-    private FlashcardRepository flashcardRepository;
-    
-    @Autowired
     private UserSubjectRepository userSubjectRepository;
 
     @Autowired
@@ -38,18 +35,22 @@ public class FlashcardService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // MỚI: Tiêm (inject) LearningLogService
     @Autowired
     private LearningLogService learningLogService;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @Transactional
     public FlashcardSet createFlashcardSet(FlashcardRequestDTO requestDTO) {
 
-        // 1. Lấy thông tin User và Subject
+        // --- (ĐÂY LÀ DÒNG SỬA LỖI) ---
+        // Chúng ta tìm bằng 'userSubjectId' (là ID của bản ghi đăng ký)
         UserSubject userSubject = userSubjectRepository.findById(requestDTO.getUserSubjectId())
                 .orElseThrow(() -> new RuntimeException("UserSubject not found"));
+        // --- (HẾT PHẦN SỬA LỖI) ---
 
-        // 2. Gọi Service AI để sinh nội dung (một chuỗi JSON)
+        // 2. Gọi Service AI
         String jsonResponse = aiGenerationService.generateFlashcards(
                 userSubject.getUser(),
                 userSubject.getSubject(),
@@ -68,9 +69,7 @@ public class FlashcardService {
             FlashcardSet newSet = new FlashcardSet();
             newSet.setUserSubject(userSubject);
             newSet.setTitle(requestDTO.getTitle());
-            newSet.setAiModelUsed("gpt-4o-mini-mock-json");
-            
-            FlashcardSet savedSet = flashcardSetRepository.save(newSet);
+            newSet.setAiModelUsed("gemini-pro"); // (Hoặc model AI bạn đang dùng)
 
             List<Flashcard> cardEntities = aiCards.stream().map(aiCard -> {
                 Flashcard card = new Flashcard();
@@ -80,13 +79,10 @@ public class FlashcardService {
                 return card;
             }).collect(Collectors.toList());
 
-            savedSet.setFlashcards(cardEntities);
+            newSet.setFlashcards(cardEntities);
+            FlashcardSet savedSet = flashcardSetRepository.save(newSet);
 
-            // 5. Lưu vào DB
-            // MỚI: Gán vào biến 'savedSet'
-            flashcardSetRepository.save(savedSet);
-
-            // 6. GHI LOG (MỚI)
+            // 6. GHI LOG
             try {
                 learningLogService.logActivity(
                         userSubject.getUser(),
@@ -99,7 +95,7 @@ public class FlashcardService {
                 System.err.println("Lỗi ghi log (Flashcard): " + e.getMessage());
             }
 
-            return savedSet; // Trả về entity đã được lưu
+            return savedSet;
 
         } catch (Exception e) {
             System.err.println("Không thể parse JSON từ AI (Flashcard): " + e.getMessage());
@@ -107,46 +103,19 @@ public class FlashcardService {
             throw new RuntimeException("Lỗi xử lý dữ liệu từ AI", e);
         }
     }
-    public FlashcardSet createFlashcardSetMock(FlashcardRequestDTO requestDTO) {
-        UserSubject us = userSubjectRepository.findById(requestDTO.getUserSubjectId())
-            .orElseThrow(() -> new IllegalArgumentException("UserSubject not found"));
 
-        FlashcardSet newSet = new FlashcardSet();
-        newSet.setUserSubject(us);
-        newSet.setTitle("Bộ flashcard test");
-        newSet.setAiModelUsed("mock-AI");
+    /**
+     * Lấy chi tiết đầy đủ của một bộ Flashcard (bao gồm tất cả các thẻ)
+     * (Hàm này đã đúng, giữ nguyên)
+     */
+    @Transactional(readOnly = true)
+    public FlashcardSetDTO getFlashcardSetDetails(Integer setId) {
 
-        // Lưu parent để có id (managed)
-        FlashcardSet savedSet = flashcardSetRepository.saveAndFlush(newSet);
-        System.out.println("savedSet.id = " + savedSet.getSetId());
+        FlashcardSet flashcardSet = flashcardSetRepository.findById(setId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bộ Flashcard: " + setId));
 
-        // Dữ liệu để tạo card
-        List<String[]> cardData = List.of(
-            new String[] {"Spring Boot", "Framework phát triển nhanh các ứng dụng Spring"},
-            new String[] {"Hibernate", "ORM cho Java"},
-            new String[] {"JPA", "Java Persistence API"}
-        );
+        FlashcardSetDTO setDTO = modelMapper.map(flashcardSet, FlashcardSetDTO.class);
 
-        // Tạo và thêm từng card vào collection quản lý của savedSet
-        for (String[] d : cardData) {
-            Flashcard card = createMockCard(d[0], d[1]); // KHÔNG save ở đây
-            savedSet.addFlashcard(card); // helper: adds to list AND card.setFlashcardSet(this)
-        }
-
-        System.out.println("1 cards added, size = " + savedSet.getFlashcards().size());
-        System.out.println("2 about to save savedSet (will cascade to cards)");
-
-        // Lưu parent — cascade = ALL sẽ persist children
-        flashcardSetRepository.saveAndFlush(savedSet);
-
-        System.out.println("3 savedSet persisted with cards, id=" + savedSet.getSetId());
-        return savedSet;
-    }
-
-    private Flashcard createMockCard(String front, String back) {
-        Flashcard card = new Flashcard();
-        card.setFrontText(front);
-        card.setBackText(back);
-        return card;
+        return setDTO;
     }
 }

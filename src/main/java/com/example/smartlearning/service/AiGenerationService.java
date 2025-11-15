@@ -1,11 +1,11 @@
 package com.example.smartlearning.service;
 
+
 import com.example.smartlearning.dto.FlashcardDTO;
 // MỚI: Thêm các import bị thiếu
 import com.example.smartlearning.dto.ai.ChatMessageDTO;
 import com.example.smartlearning.dto.ai.OpenAiRequestDTO;
 import com.example.smartlearning.dto.ai.OpenAiResponseDTO;
-import com.example.smartlearning.model.Flashcard;
 import com.example.smartlearning.model.Subject;
 import com.example.smartlearning.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,25 +41,42 @@ public class AiGenerationService {
      * Tạo một Lộ trình học (Study Plan) bằng cách gọi AI.
      * (TÔI ĐÃ SỬA LẠI HÀM NÀY ĐỂ GỌI API THẬT, thay vì chỉ mock)
      */
-    public String generateStudyPlan(User user, Subject subject, String customPrompt) {
+    public String generateStudyPlan(User user,
+                                    Subject subject,
+                                    String customPrompt,
+                                    String lectureText) {
 
         // 1. Tạo Prompt
         String systemPrompt = "Bạn là một trợ lý học tập thông minh. Hãy tạo một lộ trình học chi tiết. Hãy trả về kết quả dưới dạng Markdown.";
-        String userPrompt = String.format(
-                "Môn học: '%s'.\n" +
-                        "Mô tả: %s\n" +
-                        "Phong cách học của sinh viên: %s.\n" +
-                        "Yêu cầu thêm: %s",
-                subject.getSubjectName(),
-                subject.getDescription(),
-                user.getLearningStyle(),
-                (customPrompt != null ? customPrompt : "Không có")
+
+        StringBuilder userPromptBuilder = new StringBuilder();
+        userPromptBuilder.append(
+                String.format(
+                        "Môn học: '%s'.\nMô tả: %s\nPhong cách học của sinh viên: %s.\n",
+                        subject.getSubjectName(),
+                        subject.getDescription(),
+                        user.getLearningStyle()
+                )
         );
+
+        if (customPrompt != null && !customPrompt.isBlank()) {
+            userPromptBuilder.append("Yêu cầu thêm từ sinh viên: ").append(customPrompt).append("\n");
+        }
+
+        if (lectureText != null && !lectureText.isBlank()) {
+            userPromptBuilder.append(
+                    "\nDưới đây là nội dung bài giảng / slide mà giảng viên cung cấp. " +
+                            "Hãy dựa sát vào nội dung này để xây dựng lộ trình học, chia theo buổi/tuần cho hợp lý:\n"
+            );
+            userPromptBuilder.append(lectureText);
+        }
+
+        String userPrompt = userPromptBuilder.toString();
 
         System.out.println("--- GỬI PROMPT TỚI AI (StudyPlan) ---");
         System.out.println(systemPrompt + "\n" + userPrompt);
 
-        // 2. GỌI API BÊN NGOÀI (OpenAI)
+        // 2. GỌI API BÊN NGOÀI (OpenAI) - giữ nguyên phần còn lại
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(openApiKey);
@@ -94,11 +111,12 @@ public class AiGenerationService {
         }
     }
 
+
     /**
      * Tạo một bộ Quiz bằng cách gọi AI.
      * (Code của bạn ở đây đã OK, chỉ thiếu các trường khai báo)
      */
-    public String generateQuiz(User user, Subject subject, String topic, int numQuestions) {
+    public String generateQuiz(User user, Subject subject, String topic, int numQuestions, String lectureText) {
 
         // 1. Tạo Prompt
         String systemPrompt = String.format(
@@ -240,7 +258,6 @@ public class AiGenerationService {
                     "]";
         }
     }
-    
     @Autowired
     PDFService pdfService;
 

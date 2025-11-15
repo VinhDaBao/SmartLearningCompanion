@@ -3,6 +3,8 @@ package com.example.smartlearning.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import org.springframework.web.bind.annotation.PathVariable;
+
 @Controller // Dùng @Controller (không phải Rest) để trả về HTML
 public class PageController {
 
@@ -40,5 +42,23 @@ public class PageController {
     @GetMapping("/")
     public String redirectToLogin() {
         return "redirect:/login";
+    }
+    @GetMapping("/my-subject/{userSubjectId}")
+    public String showSubjectPage(@PathVariable Integer userSubjectId) {
+        // Chúng ta chỉ trả về "vỏ" HTML.
+        // Dữ liệu sẽ được tải bằng JavaScript sau.
+        return "my-subject"; // Trả về "my-subject.html"
+    }
+    @GetMapping("/quiz/{quizId}")
+    public String showQuizPage(@PathVariable Integer quizId) {
+        return "quiz"; // Trả về "quiz.html"
+    }
+    @GetMapping("/flashcards/{setId}")
+    public String showFlashcardPage(@PathVariable Integer setId) {
+        return "flashcards"; // Trả về "flashcards.html"
+    }
+    @GetMapping("/profile")
+    public String showProfilePage() {
+        return "profile"; // Trả về "profile.html"
     }
 }

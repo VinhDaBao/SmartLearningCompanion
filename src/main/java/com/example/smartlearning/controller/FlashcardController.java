@@ -1,5 +1,4 @@
 package com.example.smartlearning.controller;
-
 import com.example.smartlearning.dto.FlashcardDTO;
 import com.example.smartlearning.dto.FlashcardRequestDTO;
 import com.example.smartlearning.dto.FlashcardSetDTO;
@@ -44,8 +43,14 @@ public class FlashcardController {
         // 3. Trả DTO về cho Frontend
         return ResponseEntity.ok(responseDTO);
     }
-    
-	@Autowired
+    @GetMapping("/{setId}")
+    public ResponseEntity<FlashcardSetDTO> getFlashcardSetById(@PathVariable Integer setId) {
+
+        FlashcardSetDTO setDetails = flashcardService.getFlashcardSetDetails(setId);
+
+        return ResponseEntity.ok(setDetails);
+    }
+    @Autowired
 	AiGenerationService ai;
 	@PostMapping("/pdf")
 	public ResponseEntity<?> createFromPdf(
@@ -57,5 +62,4 @@ public class FlashcardController {
 
 	    return ResponseEntity.ok(list);
 	}
-    
 }

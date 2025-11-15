@@ -2,7 +2,7 @@ package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.FlashcardSetInfoDTO;
 import com.example.smartlearning.dto.QuizInfoDTO;
-import com.example.smartlearning.dto.StudyPlanInfoDTO;
+import com.example.smartlearning.dto.StudyPlanDTO;
 import com.example.smartlearning.dto.SubjectContentDTO;
 import com.example.smartlearning.model.FlashcardSet;
 import com.example.smartlearning.model.Quiz;
@@ -56,8 +56,8 @@ public class SubjectContentService {
         List<FlashcardSet> sets = flashcardSetRepository.findByUserSubjectId(userSubjectId);
 
         // 5. Chuyển đổi (Map) Entities -> DTOs
-        List<StudyPlanInfoDTO> planDTOs = plans.stream()
-                .map(p -> modelMapper.map(p, StudyPlanInfoDTO.class))
+        List<StudyPlanDTO> planDTOs = plans.stream()
+                .map(p -> modelMapper.map(p, StudyPlanDTO.class))
                 .collect(Collectors.toList());
 
         List<QuizInfoDTO> quizDTOs = quizzes.stream()

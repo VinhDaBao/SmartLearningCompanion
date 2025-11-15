@@ -14,14 +14,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.smartlearning.service.LearningLogService;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-// MỚI: Import service log
-import com.example.smartlearning.service.LearningLogService;
 
 @Service
 public class QuizService {
@@ -38,18 +35,15 @@ public class QuizService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // MỚI: Tiêm (inject) LearningLogService
     @Autowired
     private LearningLogService learningLogService;
 
     @Transactional
     public Quiz createQuiz(QuizRequestDTO requestDTO, String lectureText) {
 
-        // 1. Lấy thông tin User và Subject
         UserSubject userSubject = userSubjectRepository.findById(requestDTO.getUserSubjectId())
                 .orElseThrow(() -> new RuntimeException("UserSubject not found"));
 
-        // 2. Gọi Service AI để sinh nội dung (một chuỗi JSON), có thêm lectureText
         String jsonResponse = aiGenerationService.generateQuiz(
                 userSubject.getUser(),
                 userSubject.getSubject(),
@@ -58,18 +52,21 @@ public class QuizService {
                 lectureText
         );
 
-        // 3. Phân tích (Parse) chuỗi JSON
+        if ("ERROR_TOPIC_NOT_FOUND".equals(jsonResponse)) {
+            throw new RuntimeException("Không tìm thấy chủ đề '" + requestDTO.getTopic() + "' trong tệp đã tải lên. Vui lòng thử lại với chủ đề khác hoặc để trống.");
+        }
+
         try {
             List<AiQuizQuestionDTO> aiQuestions = objectMapper.readValue(
                     jsonResponse,
                     new TypeReference<List<AiQuizQuestionDTO>>() {}
             );
 
-            // 4. Tạo các Entity
             Quiz newQuiz = new Quiz();
             newQuiz.setUserSubject(userSubject);
             newQuiz.setTitle(requestDTO.getTopic() != null ? requestDTO.getTopic() : "Quiz " + userSubject.getSubject().getSubjectName());
-            newQuiz.setAiModelUsed("gpt-4o-mini-mock-json");
+            newQuiz.setAiModelUsed(aiGenerationService.getAiModelUsed());
+            newQuiz.setGeneratedAt(LocalDateTime.now());
 
             List<QuizQuestions> questionEntities = new ArrayList<>();
             for (AiQuizQuestionDTO aiQ : aiQuestions) {
@@ -84,10 +81,8 @@ public class QuizService {
 
             newQuiz.setQuestions(questionEntities);
 
-            // 5. Lưu vào DB
             Quiz savedQuiz = quizRepository.save(newQuiz);
 
-            // 6. GHI LOG (MỚI)
             try {
                 learningLogService.logActivity(
                         userSubject.getUser(),
@@ -108,11 +103,7 @@ public class QuizService {
             throw new RuntimeException("Lỗi xử lý dữ liệu từ AI", e);
         }
     }
-    /**
-     * Lấy chi tiết đầy đủ của một bộ Quiz (bao gồm câu hỏi & đáp án)
-     * @param quizId ID của bộ Quiz
-     * @return QuizDetailDTO
-     */
+
     @Transactional(readOnly = true)
     public QuizDetailDTO getQuizDetails(Integer quizId) {
 
@@ -123,7 +114,6 @@ public class QuizService {
         quizDTO.setQuizId(quiz.getQuizId());
         quizDTO.setTitle(quiz.getTitle());
         quizDTO.setGeneratedAt(quiz.getGeneratedAt());
-
         quizDTO.setUserSubjectId(quiz.getUserSubject().getId());
 
         List<QuizQuestionDetailDTO> questionDTOs = quiz.getQuestions().stream()
@@ -148,5 +138,41 @@ public class QuizService {
 
         quizDTO.setQuestions(questionDTOs);
         return quizDTO;
+    }
+
+    @Transactional
+    public void submitQuiz(Integer quizId, Integer userId, Integer durationInMinutes, Integer score) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+        UserSubject userSubject = quiz.getUserSubject();
+
+        if (!userSubject.getUser().getUserId().equals(userId)) {
+            throw new SecurityException("User not authorized for this quiz");
+        }
+
+        try {
+            learningLogService.logActivity(
+                    userSubject.getUser(),
+                    userSubject,
+                    "QUIZ_COMPLETED",
+                    String.format("Hoàn thành quiz: %s (Điểm: %d)", quiz.getTitle(), score),
+                    durationInMinutes
+            );
+        } catch (Exception e) {
+            System.err.println("Lỗi ghi log (Quiz Submit): " + e.getMessage());
+        }
+
+        int totalQuestions = quiz.getQuestions().size();
+        if (totalQuestions > 0) {
+            double passPercentage = (double) score / totalQuestions;
+
+            if (passPercentage >= 0.5) {
+                int currentProgress = userSubject.getProgressPercentage();
+                int newProgress = Math.min(currentProgress + 10, 100);
+
+                userSubject.setProgressPercentage(newProgress);
+                userSubjectRepository.save(userSubject);
+            }
+        }
     }
 }

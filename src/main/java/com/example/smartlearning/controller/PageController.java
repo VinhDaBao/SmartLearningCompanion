@@ -2,6 +2,7 @@ package com.example.smartlearning.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+
 import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller // Dùng @Controller (không phải Rest) để trả về HTML

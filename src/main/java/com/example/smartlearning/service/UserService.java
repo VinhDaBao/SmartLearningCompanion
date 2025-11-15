@@ -1,6 +1,7 @@
 package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.RegisterRequestDTO; // MỚI
+
 import com.example.smartlearning.dto.UpdateProfileRequestDTO;
 import com.example.smartlearning.model.User;
 import com.example.smartlearning.repository.UserRepository;

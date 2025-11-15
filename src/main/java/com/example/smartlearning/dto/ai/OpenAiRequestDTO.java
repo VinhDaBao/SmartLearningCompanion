@@ -12,7 +12,7 @@ public class OpenAiRequestDTO {
     public OpenAiRequestDTO(String model, List<ChatMessageDTO> messages) {
         this.model = model;
         this.messages = messages;
-        this.max_tokens =   100;
+        this.max_tokens =   1000;
 
     }
 }

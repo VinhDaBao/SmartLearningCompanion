@@ -4,6 +4,7 @@ import com.example.smartlearning.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -22,14 +23,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity // Kích hoạt Spring Security
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationFilter jwtAuthFilter; // "Người gác cổng"
+    private JwtAuthenticationFilter jwtAuthFilter;
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService; // Dịch vụ tải User
+    private UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -52,33 +53,29 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép frontend của bạn (có thể cần thay đổi)
         configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Áp dụng cho tất cả API
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
 
-    /**
-     * Bảng điều khiển An ninh (ĐÃ SỬA LỖI)
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // TẮT CSRF TẠI ĐÂY
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // 1. Mở API xác thực
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2. Mở các trang HTML (trang "vỏ")
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/submit").permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/login",
@@ -87,13 +84,11 @@ public class SecurityConfig {
                                 "/profile",
                                 "/quiz/**",
                                 "/flashcards/**",
-                                "/my-subject/**" // <-- DÒNG BỊ THIẾU ĐÃ ĐƯỢC THÊM LẠI
+                                "/my-subject/**"
                         ).permitAll()
 
-                        // 3. Mở các file tĩnh (CSS/JS)
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
 
-                        // 4. Đóng tất cả các API CÒN LẠI (như /api/dashboard/**, /api/quizzes/**)
                         .anyRequest().authenticated()
                 )
 

@@ -1,4 +1,5 @@
 package com.example.smartlearning.controller;
+<<<<<<< HEAD
 import com.example.smartlearning.dto.FlashcardDTO;
 import com.example.smartlearning.dto.FlashcardRequestDTO;
 import com.example.smartlearning.dto.FlashcardSetDTO;
@@ -9,11 +10,22 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
+=======
+
+import com.example.smartlearning.dto.FlashcardRequestDTO;
+import com.example.smartlearning.dto.FlashcardSetDTO;
+import com.example.smartlearning.model.FlashcardSet;
+import com.example.smartlearning.service.FlashcardService;
+import jakarta.validation.Valid;
+>>>>>>> 4e6bdac83140f07d68cdb36c421edaedb0a96adc
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+<<<<<<< HEAD
 import org.springframework.web.multipart.MultipartFile;
+=======
+>>>>>>> 4e6bdac83140f07d68cdb36c421edaedb0a96adc
 
 @RestController
 @RequestMapping("/api/flashcards")
@@ -50,6 +62,7 @@ public class FlashcardController {
 
         return ResponseEntity.ok(setDetails);
     }
+<<<<<<< HEAD
     @Autowired
 	AiGenerationService ai;
 	@PostMapping("/pdf")
@@ -62,4 +75,6 @@ public class FlashcardController {
 
 	    return ResponseEntity.ok(list);
 	}
+=======
+>>>>>>> 4e6bdac83140f07d68cdb36c421edaedb0a96adc
 }

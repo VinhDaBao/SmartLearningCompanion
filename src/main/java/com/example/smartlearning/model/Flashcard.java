@@ -1,4 +1,3 @@
-// Đặt tại: src/main/java/com/example/smartlearning/model/Flashcard.java
 package com.example.smartlearning.model;
 
 import jakarta.persistence.*;

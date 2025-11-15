@@ -66,6 +66,12 @@
             border-radius: 999px;
         }
 
+        #videoResult iframe {
+            width: 100%;
+            height: 315px;
+            border-radius: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .subject-card {
                 flex-direction: column;
@@ -513,6 +519,36 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="videoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-youtube text-danger"></i> Gợi ý Video YouTube</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="videoForm">
+                    <div class="mb-3">
+                        <label for="videoTopic" class="form-label">Chủ đề video:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="videoTopic" required placeholder="Ví dụ: Spring Boot JWT">
+                            <button type="submit" class="btn btn-danger" id="submitVideoSearch">
+                                <span class="loading-spinner" role="status"></span>
+                                <i class="bi bi-search"></i> Tìm
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+                <div id="videoResult" class="text-center">
+                    <p class="text-muted">Nhập chủ đề và nhấn tìm kiếm...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
 </div>
 
@@ -529,6 +565,7 @@
     let quizModal = null;
     let flashcardModal = null;
     let logSessionModal = null;
+    let videoModal = null;
     let toastCount = 0;
 
     $(document).ready(function() {
@@ -550,6 +587,7 @@
         quizModal = new bootstrap.Modal(document.getElementById('quizModal'));
         flashcardModal = new bootstrap.Modal(document.getElementById('flashcardModal'));
         logSessionModal = new bootstrap.Modal(document.getElementById('logSessionModal'));
+        videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
 
         setupFilters();
 
@@ -559,6 +597,11 @@
         $("#submitQuizButton").on("click", handleGenerateQuiz);
         $("#submitFlashcardButton").on("click", handleGenerateFlashcard);
         $("#submitLogButton").on("click", handleLogSession);
+
+        $("#videoForm").on("submit", function(e) {
+            e.preventDefault();
+            handleVideoSearch();
+        });
 
         $("#filterForm").on("submit", function(e) {
             e.preventDefault();
@@ -623,39 +666,32 @@
     }
 
     function loadDashboardData(userId) {
-        // ... (Hàm này giữ nguyên) ...
-        // Hiển thị loading
         $("#timeChart").hide();
         $("#activityChart").hide();
         $("#timeChartLoading").show();
         $("#activityChartLoading").show();
         $("#studyNotification").empty();
 
-        // 1. LẤY GIÁ TRỊ TỪ BỘ LỌC
         const filterType = $("#filterType").val();
         let filterDate;
 
         if (filterType === 'week') {
-            // Lấy từ ô chọn ngày
             filterDate = $("#filterDate").val();
         } else if (filterType === 'month') {
-            // Ghép tháng và năm
             const year = $("#filterYearMonth").val();
             const month = $("#filterMonth").val().padStart(2, '0');
-            filterDate = `${year}-${month}-01`; // Ví dụ: "2025-01-01"
+            filterDate = `${year}-${month}-01`;
         } else if (filterType === 'year') {
-            // Lấy từ ô chọn năm
             const year = $("#filterYear").val();
-            filterDate = `${year}-01-01`; // Ví dụ: "2025-01-01"
+            filterDate = `${year}-01-01`;
         }
 
-        // 2. GỬI AJAX VỚI DỮ LIỆU ĐÚNG
         $.ajax({
             type: "GET",
             url: `http://localhost:8080/api/dashboard/${userId}`,
             data: {
-                filterType: filterType, // Sẽ gửi "month"
-                filterDate: filterDate  // Sẽ gửi "2025-01-01"
+                filterType: filterType,
+                filterDate: filterDate
             },
             success: function(data) {
                 renderTimeChart(data.timeLabels || [], data.timeData || []);
@@ -673,7 +709,6 @@
                 $("#studyNotification").html(`<div class="alert alert-danger">Không thể tải dữ liệu dashboard.</div>`);
             },
             complete: function() {
-                // Ẩn loading
                 $("#timeChartLoading").hide();
                 $("#activityChartLoading").hide();
             }
@@ -700,9 +735,7 @@
             if (enrolledSubjects.length === 0) {
                 $("#noMySubjects").show();
             } else {
-
-                // (Giữ nguyên logic lặp qua các môn học)
-                for (const us of enrolledSubjects) {
+                enrolledSubjects.forEach(us => {
                     enrolledMap.set(us.subject.subjectId, us.id);
 
                     const cardHtml = `
@@ -715,6 +748,10 @@
                                     </p>
                                 </div>
                                 <div class="subject-actions">
+                                    <button class="btn btn-outline-danger"
+                                            onclick="openVideoModal('${us.subject.subjectName}')">
+                                        <i class="bi bi-youtube me-1"></i> Video
+                                    </button>
                                     <button class="btn btn-outline-info"
                                             onclick="viewSubjectContent(${us.id})">
                                         <i class="bi bi-book me-1"></i> Học
@@ -750,7 +787,7 @@
 
                     // KÍCH HOẠT "BÁC SĨ" AI CHO MÔN NÀY
                     fetchAdaptiveRecommendation(us.id);
-                }
+                },);
             }
 
             const allSubjects = await $.ajax({ url: "http://localhost:8080/api/subjects" });
@@ -813,7 +850,6 @@
     }
 
     function enroll(subjectId) {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $(`#enrollBtn-${subjectId}`);
         const spinner = $(`#enrollSpinner-${subjectId}`);
         btn.prop('disabled', true);
@@ -836,7 +872,6 @@
     }
 
     function openPlanModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#planUserSubjectId").val(userSubjectId);
         $("#planForm")[0].reset();
         $("#planResult").hide().empty();
@@ -845,7 +880,6 @@
     }
 
     function openQuizModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#quizUserSubjectId").val(userSubjectId);
         $("#quizForm")[0].reset();
         $("#quizResult").hide().empty();
@@ -854,20 +888,23 @@
     }
 
     function openFlashcardModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#flashcardUserSubjectId").val(userSubjectId);
         $("#flashcardForm")[0].reset();
         $("#submitFlashcardButton").prop('disabled', false).find(".loading-spinner").hide();
         flashcardModal.show();
     }
 
+    function openVideoModal(subjectName) {
+        $("#videoTopic").val(subjectName);
+        $("#videoResult").html('<p class="text-muted">Nhấn tìm kiếm để xem gợi ý...</p>');
+        videoModal.show();
+    }
+
     function viewSubjectContent(userSubjectId) {
-            // ... (Hàm này giữ nguyên) ...
             window.location.href = "/my-subject/" + userSubjectId;
         }
 
     function handleGeneratePlan() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitPlanButton");
         const spinner = btn.find(".loading-spinner");
         btn.prop('disabled', true);
@@ -912,7 +949,6 @@
     }
 
     function handleGenerateQuiz() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitQuizButton");
         const spinner = btn.find(".loading-spinner");
         btn.prop('disabled', true);
@@ -958,7 +994,6 @@
     }
 
     function handleGenerateFlashcard() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitFlashcardButton");
         const spinner = btn.find(".loading-spinner");
         const title = $("#flashcardTitle").val();
@@ -984,13 +1019,13 @@
             },
             error: function(xhr) {
                 alert("Lỗi tạo Flashcard: " + xhr.responseText);
-                btn.prop('disabled', false); spinner.hide();
+                btn.prop('disabled', false);
+                spinner.hide();
             }
         });
     }
 
     function handleLogSession() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitLogButton");
         const spinner = btn.find(".loading-spinner");
 
@@ -1024,28 +1059,125 @@
                 alert("Lỗi khi log: " + xhr.responseText);
             },
             complete: function() {
-                btn.prop('disabled', false);
-                spinner.hide();
+                btn.prop('disabled', false); spinner.hide();
+            }
+        });
+    }
+
+    function handleVideoSearch() {
+        const btn = $("#submitVideoSearch");
+        const spinner = btn.find(".loading-spinner");
+        const topic = $("#videoTopic").val();
+        const resultDiv = $("#videoResult");
+
+        if (!topic) {
+            alert("Vui lòng nhập chủ đề!");
+            return;
+        }
+
+        btn.prop('disabled', true); spinner.show();
+        resultDiv.html('<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
+
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/ai/suggest-video`,
+            data: { topic: topic },
+            success: function(data) {
+                if (data && data.embedUrl) {
+                     const videoHtml = `
+                        <h5 class="mb-3">${data.title}</h5>
+                        <div class="ratio ratio-16x9">
+                             <iframe src="${data.embedUrl}"
+                                     title="${data.title}"
+                                     frameborder="0"
+                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                     allowfullscreen>
+                             </iframe>
+                        </div>
+                    `;
+                    resultDiv.html(videoHtml);
+                } else {
+                     resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');
+                }
+            },
+            error: function(xhr) {
+                resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`);
+            },
+            complete: function() {
+                btn.prop('disabled', false); spinner.hide();
             }
         });
     }
 
     function renderTimeChart(labels, data) {
-        // ... (Hàm này giữ nguyên) ...
-        if(timeChartInstance) timeChartInstance.destroy();
+        if (timeChartInstance) {
+            timeChartInstance.destroy();
+        }
         const ctx = document.getElementById('timeChart').getContext('2d');
-        timeChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Số phút đã học', data: data, backgroundColor: 'rgba(0, 123, 255, 0.6)' }] }, options: { scales: { y: { beginAtZero: true } }, responsive: true } });
+        timeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số phút đã học',
+                    data: data,
+                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                    barPercentage: 0.5,
+                    categoryPercentage: 0.8
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true
+            }
+        });
     }
 
     function renderActivityChart(activityData) {
-        // ... (Hàm này giữ nguyên) ...
         if(activityChartInstance) activityChartInstance.destroy();
+
+        const activityLabels = {
+            "FLASHCARD_GENERATED": "Tạo Flashcard",
+            "QUIZ_GENERATED": "Tạo Quiz",
+            "QUIZ_COMPLETED": "Làm Quiz",
+            "PLAN_GENERATED": "Tạo Kế hoạch",
+            "STUDY_SESSION": "Phiên học",
+            "DEFAULT": "Hoạt động khác"
+        };
+
+        const translatedLabels = Object.keys(activityData).map(key => activityLabels[key] || activityLabels["DEFAULT"]);
+        const values = Object.values(activityData);
+
+        const backgroundColors = [
+            'rgba(0, 123, 255, 0.7)',
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(220, 53, 69, 0.7)',
+            'rgba(108, 117, 125, 0.7)'
+        ];
+
         const ctx = document.getElementById('activityChart').getContext('2d');
-        activityChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(activityData), datasets: [{ data: Object.values(activityData), backgroundColor: ['rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)', 'rgba(108, 117, 125, 0.7)'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+        activityChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: translatedLabels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
     }
 
     function showToast(message, type = "success") {
-        // ... (Hàm này giữ nguyên) ...
         const toastId = "toast-" + (toastCount++);
         const bgClass = type === "success" ? "bg-success" : "bg-danger";
 

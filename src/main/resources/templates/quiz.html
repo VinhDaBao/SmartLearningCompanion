@@ -16,7 +16,6 @@
             max-width: 800px;
             margin-top: 30px;
         }
-        /* Tùy chỉnh Carousel */
         .carousel-control-prev, .carousel-control-next {
             width: 5%;
         }
@@ -24,8 +23,6 @@
             background-color: rgba(0, 0, 0, 0.3);
             border-radius: 50%;
         }
-
-        /* Tùy chỉnh các lựa chọn (Options) */
         .quiz-option {
             display: block;
             width: 100%;
@@ -38,15 +35,11 @@
             border-color: #0d6efd;
             background-color: #f8f9fa;
         }
-
-        /* CSS cho các câu trả lời đã được chọn */
         .quiz-option.selected {
             background-color: #0d6efd !important;
             color: white !important;
             border-color: #0a58ca !important;
         }
-
-        /* CSS cho kết quả (sau khi nộp) */
         .quiz-option.correct {
             background-color: #198754 !important;
             color: white !important;
@@ -123,38 +116,65 @@
 
 <script>
     let quizId = null;
-    let allQuestions = []; // Lưu trữ tất cả câu hỏi
-    let userAnswers = {}; // Lưu trữ { questionId: "A" }
+    let allQuestions = [];
+    let userAnswers = {};
     let scoreChartInstance = null;
     let carousel = null;
 
+    let startTime = new Date();
+    let currentUserId = null;
+
     $(document).ready(function() {
-        // 1. Kiểm tra đăng nhập
         const token = localStorage.getItem("jwtToken");
-        if (!token) { window.location.href = "/login"; return; }
+        const username = localStorage.getItem("username");
+        if (!token || !username) {
+            window.location.href = "/login";
+            return;
+        }
         $.ajaxSetup({
             beforeSend: function(xhr) { xhr.setRequestHeader('Authorization', 'Bearer ' + token); }
         });
 
-        // 2. Lấy quizId từ URL
         const pathParts = window.location.pathname.split('/');
         quizId = pathParts[pathParts.length - 1];
 
         carousel = new bootstrap.Carousel(document.getElementById('quizCarousel'));
 
-        // 3. Tải dữ liệu Quiz
+        loadCurrentUserId(username);
         loadQuizData(quizId);
 
-        // 4. Gắn sự kiện
         $("#submitQuizButton").on("click", handleSubmitQuiz);
     });
 
+    function logout() {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("username");
+        window.location.href = "/login";
+    }
+
+    function loadCurrentUserId(username) {
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/users/${username}`,
+            async: false,
+            success: function(userDTO) {
+                currentUserId = userDTO.userId;
+            },
+            error: function(xhr) {
+                console.error("Không thể tải UserID", xhr);
+                alert("Lỗi phiên đăng nhập. Vui lòng đăng nhập lại.");
+                logout();
+            }
+        });
+    }
+
     function loadQuizData(quizId) {
+        if (!currentUserId) return;
+
         $.ajax({
             type: "GET",
             url: `http://localhost:8080/api/quizzes/${quizId}`,
             success: function(data) {
-                // data là QuizDetailDTO
                 allQuestions = data.questions || [];
                 if (allQuestions.length === 0) {
                     alert("Quiz này không có câu hỏi!");
@@ -162,11 +182,10 @@
                 }
 
                 $("#quizTitle").text(data.title);
-                // Đặt link "Quay lại"
                 $("#backButton").attr("href", `/my-subject/${data.userSubjectId}`);
 
                 renderQuestions(allQuestions);
-                updateProgress(0); // Bắt đầu
+                updateProgress(0);
             },
             error: function(xhr) {
                 alert("Lỗi tải Quiz: " + xhr.responseText);
@@ -175,9 +194,6 @@
         });
     }
 
-    /**
-     * Render các câu hỏi vào Carousel
-     */
     function renderQuestions(questions) {
         const carouselInner = $("#carouselInner");
         carouselInner.empty();
@@ -186,8 +202,7 @@
             const isActive = (index === 0) ? "active" : "";
             let optionsHtml = '';
 
-            // Trộn các lựa chọn (nếu muốn)
-            const options = q.options; // { "A": "...", "B": "..." }
+            const options = q.options;
             for (const key in options) {
                 optionsHtml += `
                     <button class="btn btn-outline-primary quiz-option" data-question-id="${q.questionId}" data-option-key="${key}">
@@ -213,128 +228,84 @@
             carouselInner.append(questionItem);
         });
 
-        // Gắn sự kiện Click cho TẤT CẢ các nút lựa chọn
         $(".quiz-option").on("click", handleOptionSelect);
     }
 
-    /**
-     * Khi người dùng chọn một đáp án
-     */
     function handleOptionSelect(event) {
         const selectedButton = $(this);
         const questionId = selectedButton.data("question-id");
         const optionKey = selectedButton.data("option-key");
 
-        // 1. Lưu câu trả lời
         userAnswers[questionId] = optionKey;
 
-        // 2. Cập nhật UI (Làm "đẹp")
-        // Xóa class 'selected' của các nút CÙNG câu hỏi
         selectedButton.closest(".quiz-options-list").find(".quiz-option").removeClass("selected");
-        // Thêm class 'selected' cho nút vừa bấm
         selectedButton.addClass("selected");
 
-        // 3. Cập nhật thanh tiến độ
         const answeredCount = Object.keys(userAnswers).length;
         updateProgress(answeredCount);
 
-        // 4. Tự động trượt (slide) sang câu tiếp theo
         const currentItemIndex = $(".carousel-item.active").index();
         if (currentItemIndex < allQuestions.length - 1) {
             setTimeout(() => {
-                carousel.next(); // Tự động trượt
-            }, 300); // Chờ 0.3s
+                carousel.next();
+            }, 300);
         }
     }
 
-    /**
-     * Cập nhật thanh tiến độ
-     */
     function updateProgress(answeredCount) {
         const total = allQuestions.length;
         const percentage = (answeredCount / total) * 100;
         $("#quizProgress").css("width", percentage + "%");
 
-        // Nếu đã trả lời hết, hiện nút Nộp bài
         if (answeredCount === total) {
             $("#submitQuizButton").show();
         }
     }
 
-    /**
-     * Khi bấm nút Nộp bài
-     */
     function handleSubmitQuiz() {
-            let score = 0;
-            const explanationsHtml = [];
+        let score = 0;
+        const explanationsHtml = [];
 
-            // 1. Chấm điểm
-            allQuestions.forEach((q, index) => {
-                const userAnsKey = userAnswers[q.questionId] || null; // Lấy key (ví dụ: 'A')
-                const correctAnsKey = q.correctAnswer;
-                const options = q.options; // { "A": "Text A", "B": "Text B" }
+        allQuestions.forEach((q, index) => {
+            const userAns = userAnswers[q.questionId];
+            const correctAns = q.correctAnswer;
 
-                // MỚI: Lấy nội dung text của câu trả lời
-                const userAnsText = userAnsKey ? options[userAnsKey] : "<i>(Bỏ qua)</i>";
-                const correctAnsText = options[correctAnsKey];
+            let explanation = `
+                <div class="p-3 mb-2 border rounded">
+                    <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${q.questionText}</p>
+            `;
 
-                let explanation = `
-                    <div class="p-3 mb-2 border rounded">
-                        <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${q.questionText}</p>
-                `;
-
-                if (userAnsKey === correctAnsKey) {
-                    score++;
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-success">${userAnsKey}. ${userAnsText} (Đúng)</strong></p>`;
-                } else if (userAnsKey === null) {
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-muted">${userAnsText}</strong></p>`;
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Đáp án đúng: <strong class="text-success">${correctAnsKey}. ${correctAnsText}</strong></p>`;
-                } else { // Trả lời sai
-                    // SỬA: Hiển thị cả Key và Text
-                    explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-danger">${userAnsKey}. ${userAnsText} (Sai)</strong></p>`;
-                    explanation += `<p class="mb-1">Đáp án đúng: <strong class="text-success">${correctAnsKey}. ${correctAnsText}</strong></p>`;
-                }
-                explanation += `<p class="text-muted mb-0"><em>Giải thích: ${q.explanation}</em></p></div>`;
-                explanationsHtml.push(explanation);
-            });
-
-            const total = allQuestions.length;
-            const percentage = Math.round((score / total) * 100);
-
-            // 2. Ẩn Quiz, Hiện Kết quả
-            $("#quizScreen").hide();
-            $("#resultsScreen").show();
-
-            // 3. (SỬA) Hiển thị điểm VÀ thông điệp động
-            const scoreText = $("#quizScore");
-            const resultTitle = $("#resultTitle");
-
-            scoreText.text(`${score} / ${total} (${percentage}%)`);
-            scoreText.removeClass("text-result-bad text-result-medium text-result-good"); // Xóa màu cũ
-
-            if (percentage < 50) {
-                resultTitle.text("Cần cố gắng hơn! 😢");
-                scoreText.addClass("text-result-bad"); // Thêm class màu đỏ
-            } else if (percentage < 80) {
-                resultTitle.text("Làm tốt lắm! 🤔");
-                scoreText.addClass("text-result-medium"); // Thêm class màu vàng
+            if (userAns === correctAns) {
+                score++;
+                explanation += `<p class="mb-1">Bạn đã chọn: <strong>${userAns} (Đúng)</strong></p>`;
             } else {
-                resultTitle.text("Tuyệt vời! 🎉");
-                scoreText.addClass("text-result-good"); // Thêm class màu xanh
+                explanation += `<p class="mb-1">Bạn đã chọn: <strong class="text-danger">${userAns} (Sai)</strong></p>`;
+                explanation += `<p class="mb-1">Đáp án đúng: <strong>${correctAns}</strong></p>`;
             }
+            explanation += `<p class="text-muted mb-0"><em>Giải thích: ${q.explanation}</em></p></div>`;
+            explanationsHtml.push(explanation);
+        });
 
-            // 4. Hiển thị giải thích
-            $("#explanationsContainer").append(explanationsHtml.join(""));
+        const total = allQuestions.length;
+        const percentage = Math.round((score / total) * 100);
 
-            // 5. Vẽ biểu đồ
-            renderScoreChart(score, total - score);
-        }
+        $("#quizScreen").hide();
+        $("#resultsScreen").show();
+
+        $("#quizScore").text(`${score} / ${total} (${percentage}%)`);
+
+        $("#explanationsContainer").append(explanationsHtml.join(""));
+
+        renderScoreChart(score, total - score);
+
+        const durationInMinutes = Math.ceil((new Date() - startTime) / (1000 * 60));
+
+        logQuizResult(parseInt(quizId), currentUserId, durationInMinutes, score);
+    }
 
     function renderScoreChart(correct, incorrect) {
         if(scoreChartInstance) scoreChartInstance.destroy();
-        const ctx = document.getElementById('scoreChart').getContext('d');
+        const ctx = document.getElementById('scoreChart').getContext('2d');
         scoreChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -345,6 +316,31 @@
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function logQuizResult(quizId, userId, durationInMinutes, score) {
+        if (!userId) {
+            console.error("Không thể ghi log: UserId bị null.");
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/quizzes/submit",
+            contentType: "application/json",
+            data: JSON.stringify({
+                quizId: quizId,
+                userId: userId,
+                durationInMinutes: durationInMinutes,
+                score: score
+            }),
+            success: function() {
+                console.log("Kết quả Quiz đã được ghi log.");
+            },
+            error: function(xhr) {
+                console.error("Lỗi khi ghi log kết quả Quiz:", xhr.responseText);
+            }
         });
     }
 

@@ -21,9 +21,11 @@ public class Flashcard {
     @Column(name = "back_text", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String backText; // Mặt sau
 
-    // --- Mối quan hệ ---
-    // Nhiều thẻ thuộc về MỘT bộ (Set)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "set_id", nullable = false)
     private FlashcardSet flashcardSet;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id")
+    private Topic topic;
 }

@@ -9,6 +9,8 @@ import com.google.genai.types.Part;
 import com.example.smartlearning.dto.FlashcardDTO;
 import com.example.smartlearning.dto.ai.VideoSuggestionDTO;
 import com.example.smartlearning.model.Subject;
+import com.example.smartlearning.model.SubjectContent;
+import com.example.smartlearning.model.Topic;
 import com.example.smartlearning.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,14 +91,13 @@ public class AiGenerationService {
 
         try {
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
-
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
                     .responseMimeType("text/plain")
                     .build();
 
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
             String content = response.text();
 
@@ -107,10 +108,9 @@ public class AiGenerationService {
             }
         } catch (Exception e) {
             System.err.println("Lỗi khi gọi Gemini API (StudyPlan) bằng SDK: " + e.getMessage());
-            String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "# Lộ trình học " + subject.getSubjectName() + " (Mock Fallback)\n\n" +
                     "**API Lỗi:**\n" +
-                    "* " + safeErrorMessage;
+                    "* " + e.getMessage().replace("\"", "'").replace("'", "`");
         }
     }
 
@@ -125,59 +125,52 @@ public class AiGenerationService {
                         "  \"questionText\": \"Nội dung câu hỏi\",\n" +
                         "  \"options\": {\"A\": \"Lựa chọn A\", \"B\": \"Lựa chọn B\", \"C\": \"Lựa chọn C\", \"D\": \"Lựa chọn D\"},\n" +
                         "  \"correctAnswer\": \"A\",\n" +
-                        "  \"explanation\": \"Giải thích tại sao đáp án A đúng.\"\n" +
+                        "  \"explanation\": \"Giải thích tại sao đáp án A đúng.\",\n" +
+                        "  \"topicName\": \"Tên chủ đề chính của câu hỏi này (ví dụ: Spring Data JPA, Dependency Injection)\"\n" +
                         "}", numQuestions
         );
 
-        String userPrompt;
-        boolean hasFile = lectureText != null && !lectureText.isBlank();
-        boolean hasTopic = topic != null && !topic.isBlank();
 
-        if (hasFile && hasTopic) {
-            userPrompt = String.format(
-                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
-                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
-                            "VÀ MỘT CHỦ ĐỀ: '%s'. " +
-                            "HÃY LÀM THEO CÁC BƯỚC SAU: " +
-                            "1. Đọc tài liệu và xác định xem chủ đề '%s' có được đề cập rõ ràng trong tài liệu không. " +
-                            "2. NẾU KHÔNG TÌM THẤY CHỦ ĐỀ, hãy trả về một chuỗi duy nhất: 'ERROR_TOPIC_NOT_FOUND'. " +
-                            "3. NẾU TÌM THẤY CHỦ ĐỀ, hãy tạo %d câu hỏi trắc nghiệm (A, B, C, D) CHỈ DỰA TRÊN TÀI LIỆU, tập trung vào chủ đề đó.",
-                    lectureText,
-                    topic,
-                    topic,
-                    numQuestions
+        StringBuilder userPromptBuilder = new StringBuilder();
+        userPromptBuilder.append(String.format(
+                "Môn học: %s.\n" +
+                        "Chủ đề quiz: %s.\n" +
+                        "Phong cách học của sinh viên: %s.\n",
+                subject.getSubjectName(),
+                (topic != null ? topic : "Tổng quan môn học"),
+                user.getLearningStyle()
+        ));
+
+        if (lectureText != null && !lectureText.isBlank()) {
+            userPromptBuilder.append(
+                    "\nDưới đây là nội dung tài liệu / bài giảng. HÃY DỰA VÀO NỘI DUNG NÀY ĐỂ TẠO CÂU HỎI:\n\n"
             );
-        } else if (hasFile && !hasTopic) {
-            userPrompt = String.format(
-                    "Bạn là một AI chuyên tạo câu hỏi quiz từ tài liệu. " +
-                            "Dưới đây là một tài liệu: [BEGIN_DOCUMENT]%s[END_DOCUMENT]. " +
-                            "Hãy đọc toàn bộ tài liệu và tạo %d câu hỏi trắc nghiệm (A, B, C, D) " +
-                            "dựa trên nội dung tổng quan của tài liệu.",
-                    lectureText,
-                    numQuestions
-            );
-        } else {
-            userPrompt = String.format(
-                    "Chủ đề quiz: %s (cho môn %s).\n" +
-                            "Phong cách học của sinh viên: %s.",
-                    (topic != null ? topic : "Tổng quan môn học"),
-                    subject.getSubjectName(),
-                    user.getLearningStyle()
-            );
+            userPromptBuilder.append("--- NỘI DUNG BẮT ĐẦU ---\n");
+            userPromptBuilder.append(lectureText);
+            userPromptBuilder.append("\n--- NỘI DUNG KẾT THÚC ---");
         }
+
+        String userPrompt = userPromptBuilder.toString();
 
         System.out.println("--- GỬI PROMPT TỚI GEMINI (QUIZ) bằng SDK ---");
 
+        // --- BẮT ĐẦU THÊM DÒNG DEBUG ---
+        // (Kiểm tra xem nội dung file có bị trống, "null" hay bị "rác" không)
+        System.out.println("**************************************************");
+        System.out.println("NỘI DUNG FILE MÀ AI NHẬN ĐƯỢC (lectureText):");
+        System.out.println(lectureText != null ? lectureText : "!!! LỖI: NỘI DUNG FILE BỊ NULL !!!");
+        System.out.println("**************************************************");
+        // --- KẾT THÚC THÊM DÒNG DEBUG ---
+
         try {
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
-
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
                     .responseMimeType("application/json")
                     .build();
 
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
             String jsonContent = response.text();
 
@@ -196,7 +189,8 @@ public class AiGenerationService {
                     "    \"questionText\": \"Câu hỏi giả lập 1: API gặp lỗi\", \n" +
                     "    \"options\": {\"A\": \"Đáp án A\", \"B\": \"Đáp án B\", \"C\": \"Đáp án C\", \"D\": \"Đáp án D\"}, \n" +
                     "    \"correctAnswer\": \"A\", \n" +
-                    "    \"explanation\": \"Đây là dữ liệu giả lập do không thể gọi API. Lỗi: " + safeErrorMessage + "\" \n" +
+                    "    \"explanation\": \"Đây là dữ liệu giả lập... Lỗi: " + safeErrorMessage + "\", \n" +
+                    "    \"topicName\": \"Chủ đề Lỗi\" \n" +
                     "  } \n" +
                     "]";
         }
@@ -209,10 +203,12 @@ public class AiGenerationService {
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
                         "Định dạng JSON cho mỗi đối tượng trong mảng phải là:\n" +
                         "{\n" +
-                        "  \"frontText\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
-                        "  \"backText\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
+                        "  \"front\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
+                        "  \"back\": \"Mặt sau (Định nghĩa / Trả lời)\",\n" +
+                        "  \"topicName\": \"Tên chủ đề chính của flashcard này (ví dụ: Spring Bean, Interface)\"\n" +
                         "}", numCards
         );
+
         String userPrompt = String.format(
                 "Chủ đề: %s (cho môn %s).\n" +
                         "Phong cách học của sinh viên: %s.\n" +
@@ -226,14 +222,13 @@ public class AiGenerationService {
 
         try {
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
-
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
                     .responseMimeType("application/json")
                     .build();
 
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
             String jsonContent = response.text();
 
@@ -249,8 +244,9 @@ public class AiGenerationService {
             String safeErrorMessage = e.getMessage().replace("\"", "'").replace("'", "`");
             return "[ \n" +
                     "  { \n" +
-                    "    \"frontText\": \"Flashcard giả lập (Lỗi API)\", \n" +
-                    "    \"backText\": \"Không thể tạo flashcard. Lỗi: " + safeErrorMessage + "\" \n" +
+                    "    \"front\": \"Flashcard giả lập (Lỗi API)\", \n" +
+                    "    \"back\": \"Không thể tạo flashcard. Lỗi: " + safeErrorMessage + "\", \n" +
+                    "    \"topicName\": \"Chủ đề Lỗi\" \n" +
                     "  } \n" +
                     "]";
         }
@@ -296,17 +292,15 @@ public class AiGenerationService {
 
         try {
             Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
-
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(systemInstruction)
                     .responseMimeType("application/json")
                     .build();
 
             GenerateContentResponse response = this.geminiClient.models
-                    .generateContent(this.aiModelUsed, userPrompt, config);
+                    .generateContent("gemini-2.5-flash", userPrompt, config);
 
             String json = response.text();
-
             return mapper.readValue(json, new TypeReference<List<FlashcardDTO>>() {});
         } catch (Exception e) {
             System.err.println("Lỗi Gemini (Chunk PDF) bằng SDK: " + e.getMessage());
@@ -327,5 +321,85 @@ public class AiGenerationService {
             allCards.addAll(part);
         }
         return allCards;
+    }
+
+
+    /**
+     * Tạo văn bản đề xuất thích ứng
+     * (Hàm này giữ nguyên)
+     */
+    public String generateRecommendationText(
+            String learningStyle,
+            Topic weakestTopic,
+            SubjectContent content,
+            String scenario
+    ) {
+        String systemPrompt = "Bạn là một trợ lý học tập AI thân thiện, đưa ra lời khuyên ngắn gọn (1-2 câu).";
+
+        StringBuilder userPrompt = new StringBuilder();
+        userPrompt.append(String.format("Phong cách học của sinh viên: %s.\n", learningStyle));
+
+        switch (scenario) {
+            case "NO_ATTEMPTS":
+                userPrompt.append("Sinh viên này CHƯA LÀM BÀI TẬP nào cho môn này. " +
+                        "Hãy viết một lời chào mừng và khuyến khích họ bắt đầu học hoặc làm một bài quiz.");
+                break;
+            case "PERFECT":
+                userPrompt.append("Sinh viên này đã làm bài và không có lỗi sai nào. " +
+                        "Hãy viết một lời khen ngợi ấn tượng về kết quả hoàn hảo của họ.");
+                break;
+            case "GENERAL_ERROR":
+                userPrompt.append("Sinh viên này có một số lỗi sai ở các bài quiz cũ (chưa được gắn chủ đề). " +
+                        "Hãy động viên họ và nhắc họ ôn tập lại kiến thức chung của môn học.");
+                break;
+            case "WEAK_NO_MATERIAL":
+                userPrompt.append(String.format(
+                        "Sinh viên này yếu chủ đề '%s', nhưng thư viện không có tài liệu. " +
+                                "Hãy động viên họ và đề nghị họ tự ôn tập chủ đề này.",
+                        weakestTopic.getTopicName()
+                ));
+                break;
+            case "RECOMMEND":
+                userPrompt.append(String.format(
+                        "Sinh viên này yếu chủ đề '%s'. " +
+                                "Hãy đề xuất họ xem tài liệu sau: [Loại: %s, Tiêu đề: '%s']. " +
+                                "Hãy thật thân thiện và khuyến khích.",
+                        weakestTopic.getTopicName(),
+                        content.getContentType(),
+                        content.getTitle()
+                ));
+                break;
+            default:
+                userPrompt.append("Hãy đưa ra một lời khuyên học tập chung.");
+        }
+
+        try {
+            Content systemInstruction = Content.fromParts(Part.fromText(systemPrompt));
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .systemInstruction(systemInstruction)
+                    .responseMimeType("text/plain")
+                    .build();
+
+            GenerateContentResponse response = this.geminiClient.models
+                    .generateContent("gemini-2.5-flash", userPrompt.toString(), config);
+
+            return response.text();
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tạo text đề xuất: " + e.getMessage());
+            // Fallback (dự phòng)
+            switch (scenario) {
+                case "NO_ATTEMPTS":
+                    return "Chào mừng bạn! Hãy bắt đầu làm quiz để AI có thể giúp bạn nhé.";
+                case "PERFECT":
+                    return "Kết quả của bạn thật ấn tượng! Hãy tiếp tục phát huy.";
+                case "RECOMMEND":
+                    return String.format("Có vẻ bạn đang gặp khó khăn với chủ đề '%s'. " +
+                                    "Hãy thử xem tài liệu này nhé: %s",
+                            weakestTopic.getTopicName(), content.getTitle());
+                default:
+                    return "Hãy cố gắng ôn tập kỹ hơn nhé!";
+            }
+        }
     }
 }

@@ -17,4 +17,6 @@ public class AiQuizQuestionDTO {
     private String correctAnswer;
 
     private String explanation;
+
+    private String topicName;
 }

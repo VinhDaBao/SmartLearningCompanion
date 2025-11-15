@@ -42,7 +42,7 @@ public class StudyPlanService {
         StudyPlan newStudyPlan = new StudyPlan();
         newStudyPlan.setUserSubject(userSubject);
         newStudyPlan.setPlanContent(aiContent);
-        newStudyPlan.setAiModelUsed("gemini-pro");
+        newStudyPlan.setAiModelUsed("gemini-1.5-flash");
 
         StudyPlan savedPlan = studyPlanRepository.save(newStudyPlan);
 

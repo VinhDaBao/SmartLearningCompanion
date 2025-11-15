@@ -223,6 +223,7 @@ public class QuizService {
         List<QuestionFeedbackDTO> feedbackList = new ArrayList<>();
         Map<Integer, String> userSubmittedAnswers = submitDTO.getAnswers();
 
+        
         for (QuizQuestions q : questions) {
             Integer qId = q.getQuestionId();
             String selectedAnswer = userSubmittedAnswers.getOrDefault(qId, "");
@@ -240,13 +241,24 @@ public class QuizService {
             uqa.setSelectedAnswer(selectedAnswer);
             uqa.setCorrect(isCorrect);
             userAnswersToSave.add(uqa);
-
+            System.out.println(isCorrect);
             feedbackList.add(new QuestionFeedbackDTO(qId, selectedAnswer, correctAnswer, isCorrect, explanation));
         }
 
         answerRepository.saveAll(userAnswersToSave);
 
         double finalScore = (totalQuestions > 0) ? ((double) correctCount / totalQuestions) * 10 : 0;
+        if (totalQuestions > 0) {
+            double passPercentage = (double) finalScore / totalQuestions;
+
+            if (passPercentage >= 0.5) {
+                int currentProgress = userSubject.getProgressPercentage();
+                int newProgress = Math.min(currentProgress + 10, 100);
+
+                userSubject.setProgressPercentage(newProgress);
+                userSubjectRepository.save(userSubject);
+            }
+        }
         savedAttempt.setScore(finalScore);
         attemptRepository.save(savedAttempt);
 

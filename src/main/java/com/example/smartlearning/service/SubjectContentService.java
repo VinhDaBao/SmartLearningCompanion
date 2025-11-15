@@ -57,14 +57,9 @@ public class SubjectContentService {
         List<Quiz> quizzes = quizRepository.findByUserSubjectId(userSubjectId);
         List<FlashcardSet> sets = flashcardSetRepository.findByUserSubjectId(userSubjectId);
 
-<<<<<<< HEAD
-        List<StudyPlanInfoDTO> planDTOs = plans.stream()
-                .map(p -> modelMapper.map(p, StudyPlanInfoDTO.class))
-=======
-        // 5. Chuyển đổi (Map) Entities -> DTOs
+
         List<StudyPlanDTO> planDTOs = plans.stream()
                 .map(p -> modelMapper.map(p, StudyPlanDTO.class))
->>>>>>> 35964d755b3882ca5379f09e21a9907d8983063a
                 .collect(Collectors.toList());
 
         // --- BẮT ĐẦU SỬA ĐỔI LOGIC QUIZ ---

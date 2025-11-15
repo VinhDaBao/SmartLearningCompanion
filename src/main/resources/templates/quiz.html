@@ -349,7 +349,9 @@
         explanationsContainer.find('div.p-3').remove(); // Xóa giả lập cũ
 
         feedback.forEach((qFeedback, index) => {
-            const isCorrect = qFeedback.isCorrect;
+            console.log(`Câu ${index + 1}: isCorrect = ${qFeedback.correct}, selected = ${qFeedback.selectedAnswer}, correct = ${qFeedback.correctAnswer}`);
+
+            const isCorrect = qFeedback.correct;
             const statusClass = isCorrect ? 'text-success' : 'text-danger';
             const statusText = isCorrect ? 'Đúng' : 'Sai';
             const userChoiceText = allQuestions.find(q => q.questionId === qFeedback.questionId).options[qFeedback.selectedAnswer] || "<i>(Bỏ qua)</i>";
@@ -388,7 +390,7 @@
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
-    }
+    } 
 
     function logQuizResult(quizId, userId, durationInMinutes, score) {
         if (!userId) {

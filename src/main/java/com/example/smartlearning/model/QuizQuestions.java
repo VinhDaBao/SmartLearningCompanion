@@ -34,4 +34,10 @@ public class QuizQuestions {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
+
+    // (Trường này bạn đã thêm, rất chính xác)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id")
+    private Topic topic;
+
 }

@@ -1,0 +1,13 @@
+package com.example.smartlearning.dto;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+public class FlashcardSetDTO {
+    private Integer setId;
+    private String title;
+    private LocalDateTime generatedAt;
+    private List<FlashcardDTO> flashcards; // Lồng DTO
+}

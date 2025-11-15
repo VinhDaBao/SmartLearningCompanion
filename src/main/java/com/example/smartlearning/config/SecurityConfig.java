@@ -100,6 +100,8 @@ public class SecurityConfig {
 
                         // MỞ CÁC TRANG HTML
                         .requestMatchers("/", "/login", "/register").permitAll()
+                        .requestMatchers("/api/**").permitAll()
+
 
                         // --- (ĐÂY LÀ DÒNG SỬA) ---
                         // Mở trang "vỏ" (shell) của dashboard

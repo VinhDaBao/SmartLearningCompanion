@@ -1,0 +1,78 @@
+// Đặt tại: src/main/java/com/example/smartlearning/service/UserSubjectService.java
+package com.example.smartlearning.service;
+
+import com.example.smartlearning.model.Subject;
+import com.example.smartlearning.model.User;
+import com.example.smartlearning.model.UserSubject;
+import com.example.smartlearning.repository.SubjectRepository;
+import com.example.smartlearning.repository.UserRepository;
+import com.example.smartlearning.repository.UserSubjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // <-- IMPORT MỚI
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class UserSubjectService {
+
+    @Autowired
+    private UserSubjectRepository userSubjectRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SubjectRepository subjectRepository;
+
+    /**
+     * Lấy tất cả các môn học mà một user đã đăng ký.
+     */
+    // (Hàm này nên thêm @Transactional)
+    @Transactional(readOnly = true)
+    public List<UserSubject> getEnrolledSubjectsByUserId(Integer userId) {
+        return userSubjectRepository.findByUserUserId(userId);
+    }
+
+    /**
+     * Lấy chi tiết một môn học đã đăng ký.
+     * === PHẦN SỬA LỖI 2 ===
+     * Thêm @Transactional để giữ Session mở,
+     * cho phép ModelMapper truy cập các thuộc tính LAZY
+     */
+    @Transactional(readOnly = true)
+    public UserSubject getEnrolledSubjectDetails(Integer userSubjectId) {
+        return userSubjectRepository.findById(userSubjectId)
+                .orElseThrow(() -> new RuntimeException("Enrollment not found: " + userSubjectId));
+    }
+
+    /**
+     * Logic nghiệp vụ: Đăng ký cho sinh viên học một môn mới.
+     */
+    @Transactional
+    public UserSubject enrollUserInSubject(Integer userId, Integer subjectId) {
+
+        // 1. Kiểm tra xem đã đăng ký chưa
+        Optional<UserSubject> existing = userSubjectRepository.findByUserUserIdAndSubjectSubjectId(userId, subjectId);
+
+        if (existing.isPresent()) {
+            throw new RuntimeException("User already enrolled in this subject");
+        }
+
+        // 2. Lấy (hoặc xác thực) User và Subject
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+
+        // 3. Tạo bản ghi đăng ký mới
+        UserSubject newUserSubject = new UserSubject();
+        newUserSubject.setUser(user);
+        newUserSubject.setSubject(subject);
+        newUserSubject.setProgressPercentage(0); // Mặc định là 0
+
+        // 4. Lưu vào database
+        return userSubjectRepository.save(newUserSubject);
+    }
+}

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Làm Quiz - Smart Learning</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f4f7f6;
+        }
+        .quiz-container {
+            max-width: 800px;
+            margin-top: 30px;
+        }
+        .carousel-control-prev, .carousel-control-next {
+            width: 5%;
+        }
+        .carousel-control-prev-icon, .carousel-control-next-icon {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+        }
+        .quiz-option {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            text-align: left;
+            border: 2px solid #eee;
+            transition: all 0.2s ease-in-out;
+        }
+        .quiz-option:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+        .quiz-option.selected {
+            background-color: #0d6efd !important;
+            color: white !important;
+            border-color: #0a58ca !important;
+        }
+        .quiz-option.correct {
+            background-color: #198754 !important;
+            color: white !important;
+            border-color: #146c43 !important;
+        }
+        .quiz-option.incorrect {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #b02a37 !important;
+        }
+
+        #resultsScreen {
+            display: none; /* Ẩn ban đầu */
+        }
+        .text-result-bad { color: #dc3545; } /* Đỏ */
+        .text-result-medium { color: #ffc107; } /* Vàng */
+        .text-result-good { color: #198754; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-success shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-brain-fill"></i> Smart Learning</a>
+        <h4 class="navbar-text text-white mb-0" id="quizTitle">Đang tải Quiz...</h4>
+        <a class="btn btn-outline-light" id="backButton" href="#">
+            <i class="bi bi-arrow-left-circle"></i> Quay lại
+        </a>
+    </div>
+</nav>
+
+<div class="container quiz-container">
+
+    <div id="quizScreen">
+        <div class="progress mb-3" style="height: 10px;">
+            <div id="quizProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+        </div>
+
+        <div id="quizCarousel" class="carousel slide" data-bs-ride="false" data-bs-interval="false">
+            <div class="carousel-inner" id="carouselInner">
+            </div>
+
+            <button class="carousel-control-prev" type="button" data-bs-target="#quizCarousel" data-bs-slide="prev" style="display: none;">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#quizCarousel" data-bs-slide="next" style="display: none;">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
+        <button class="btn btn-success btn-lg w-100 mt-3" id="submitQuizButton" style="display: none;">
+            <i class="bi bi-check2-circle"></i> Nộp bài và Xem kết quả
+        </button>
+    </div>
+
+    <div id="resultsScreen" class="card shadow-sm border-0">
+        <div class="card-body text-center p-5">
+            <h1 class="display-3">Hoàn thành!</h1>
+            <h2 id="resultTitle" class="mb-4">Kết quả của bạn: <span id="quizScore"></span></h2>
+            <div id="scoreChartContainer" style="max-width: 200px; margin: 0 auto 20px;">
+                <canvas id="scoreChart"></canvas> </div>
+            <a class="btn btn-primary" href="/dashboard">Về Dashboard</a>
+            <button class="btn btn-outline-secondary" onclick="window.location.reload()">Làm lại</button>
+        </div>
+        <div class="card-footer" id="explanationsContainer">
+            <h3><i class="bi bi-lightbulb-fill text-warning"></i> Xem lại đáp án</h3>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let quizId = null;
+    let userSubjectId = null; // <-- THÊM ID MÔN HỌC
+    let allQuestions = [];
+    let userAnswers = {};
+    let scoreChartInstance = null;
+    let carousel = null;
+
+    let startTime = new Date();
+    let currentUserId = null;
+
+    $(document).ready(function() {
+        const token = localStorage.getItem("jwtToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) {
+            window.location.href = "/login";
+            return;
+        }
+        $.ajaxSetup({
+            beforeSend: function(xhr) { xhr.setRequestHeader('Authorization', 'Bearer ' + token); }
+        });
+
+        const pathParts = window.location.pathname.split('/');
+        quizId = pathParts[pathParts.length - 1];
+
+        carousel = new bootstrap.Carousel(document.getElementById('quizCarousel'));
+
+        loadCurrentUserId(username);
+        loadQuizData(quizId);
+
+        $("#submitQuizButton").on("click", handleSubmitQuiz);
+    });
+
+    function logout() {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("username");
+        window.location.href = "/login";
+    }
+
+    function loadCurrentUserId(username) {
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/users/${username}`,
+            async: false,
+            success: function(userDTO) {
+                currentUserId = userDTO.userId;
+            },
+            error: function(xhr) {
+                console.error("Không thể tải UserID", xhr);
+                alert("Lỗi phiên đăng nhập. Vui lòng đăng nhập lại.");
+                logout();
+            }
+        });
+    }
+
+    function loadQuizData(quizId) {
+        if (!currentUserId) return;
+
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/quizzes/${quizId}`,
+            success: function(data) {
+                allQuestions = data.questions || [];
+                if (allQuestions.length === 0) {
+                    alert("Quiz này không có câu hỏi!");
+                    return;
+                }
+
+                // --- BẮT ĐẦU SỬA LỖI ---
+                userSubjectId = data.userSubjectId; // LƯU ID MÔN HỌC TỪ SERVER
+                // --- KẾT THÚC SỬA LỖI ---
+
+                $("#quizTitle").text(data.title);
+                $("#backButton").attr("href", `/my-subject/${data.userSubjectId}`);
+
+                renderQuestions(allQuestions);
+                updateProgress(0);
+            },
+            error: function(xhr) {
+                alert("Lỗi tải Quiz: " + xhr.responseText);
+                if (xhr.status === 401 || xhr.status === 403) logout();
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        return $('<div>').text(text).html();
+    }
+
+    function renderQuestions(questions) {
+        const carouselInner = $("#carouselInner");
+        carouselInner.empty();
+
+        questions.forEach((q, index) => {
+            const isActive = (index === 0) ? "active" : "";
+            let optionsHtml = '';
+
+            const options = q.options;
+            for (const key in options) {
+                const safeOptionText = escapeHtml(options[key]);
+                optionsHtml += `
+                    <button class="btn btn-outline-primary quiz-option" data-question-id="${q.questionId}" data-option-key="${key}">
+                        <strong>${key}.</strong> ${safeOptionText}
+                    </button>
+                `;
+            }
+
+            const questionItem = `
+                <div class="carousel-item ${isActive}">
+                    <div class="card shadow border-0">
+                        <div class="card-body p-4 p-md-5">
+                            <h5 class="card-title mb-4">Câu ${index + 1} / ${questions.length}</h5>
+                            <p class="lead" style="min-height: 50px;">${escapeHtml(q.questionText)}</p>
+                            <hr>
+                            <div class="quiz-options-list">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            carouselInner.append(questionItem);
+        });
+
+        $(".quiz-option").on("click", handleOptionSelect);
+    }
+
+    function handleOptionSelect(event) {
+        const selectedButton = $(this);
+        const questionId = selectedButton.data("question-id");
+        const optionKey = selectedButton.data("option-key");
+
+        userAnswers[questionId] = optionKey;
+
+        selectedButton.closest(".quiz-options-list").find(".quiz-option").removeClass("selected");
+        selectedButton.addClass("selected");
+
+        const answeredCount = Object.keys(userAnswers).length;
+        updateProgress(answeredCount);
+
+        const currentItemIndex = $(".carousel-item.active").index();
+        if (currentItemIndex < allQuestions.length - 1) {
+            setTimeout(() => {
+                carousel.next();
+            }, 300);
+        }
+    }
+
+    function updateProgress(answeredCount) {
+        const total = allQuestions.length;
+        const percentage = (answeredCount / total) * 100;
+        $("#quizProgress").css("width", percentage + "%");
+
+        if (answeredCount === total) {
+            $("#submitQuizButton").show();
+        }
+    }
+
+    /**
+     * SỬA LỖI: Khi bấm nút Nộp bài
+     */
+    function handleSubmitQuiz() {
+        // Kiểm tra xem đã trả lời hết chưa (nếu không, server sẽ báo lỗi)
+        if (Object.keys(userAnswers).length < allQuestions.length) {
+            alert("Vui lòng trả lời tất cả các câu hỏi trước khi nộp bài!");
+            return;
+        }
+
+        // 1. Chuẩn bị dữ liệu để gửi lên server (Đúng định dạng SubmitQuizRequestDTO)
+        const submissionData = {
+            userSubjectId: userSubjectId,
+            quizId: quizId,
+            answers: userAnswers
+        };
+
+        // Vô hiệu hóa nút để tránh gửi lại
+        $("#submitQuizButton").prop('disabled', true).text('Đang nộp bài...');
+
+        // 2. GỌI API SUBMIT
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/quizzes/submit", // Endpoint đã tạo ở Bước 1
+            contentType: "application/json",
+            data: JSON.stringify(submissionData),
+            success: function(responseDTO) { // responseDTO là SubmitQuizResponseDTO
+
+                // 3. Sử dụng điểm số CHÍNH THỨC từ server
+                renderResults(responseDTO);
+                $("#backToSubjectButton").attr('href', `/my-subject/${userSubjectId}`);
+                // Gỡ vô hiệu hóa (disable)
+                $("#submitQuizButton").prop('disabled', false).text('Đã nộp bài!');
+            },
+            error: function(xhr) {
+                alert("Lỗi khi nộp bài: " + xhr.responseText);
+                $("#submitQuizButton").prop('disabled', false).text('Nộp bài thất bại! Thử lại');
+            }
+        });
+    }
+
+    /**
+     * HIỂN THỊ KẾT QUẢ VÀ FEEDBACK (Dùng dữ liệu từ server)
+     */
+    function renderResults(responseDTO) {
+        const score = responseDTO.correctCount;
+        const total = responseDTO.totalQuestions;
+        const percentage = Math.round(responseDTO.score); // Điểm trên thang 10
+        const feedback = responseDTO.feedback; // Danh sách các câu trả lời
+
+        // 1. Ẩn Quiz, Hiện Kết quả
+        $("#quizScreen").hide();
+        $("#resultsScreen").show();
+
+        // 2. Cập nhật Điểm và Màu sắc
+        const scoreText = $("#quizScore");
+        const resultTitle = $("#resultTitle");
+
+        scoreText.text(`${score} / ${total} (${percentage}%)`);
+        scoreText.removeClass("text-result-bad text-result-medium text-result-good");
+
+        if (percentage < 5) {
+            resultTitle.text("Cần cố gắng hơn! 😢");
+            scoreText.addClass("text-result-bad");
+        } else if (percentage < 8) {
+            resultTitle.text("Làm tốt lắm! 🤔");
+            scoreText.addClass("text-result-medium");
+        } else {
+            resultTitle.text("Tuyệt vời! 🎉");
+            scoreText.addClass("text-result-good");
+        }
+
+        // 3. Hiển thị giải thích
+        const explanationsContainer = $("#explanationsContainer");
+        explanationsContainer.find('div.p-3').remove(); // Xóa giả lập cũ
+
+        feedback.forEach((qFeedback, index) => {
+            const isCorrect = qFeedback.isCorrect;
+            const statusClass = isCorrect ? 'text-success' : 'text-danger';
+            const statusText = isCorrect ? 'Đúng' : 'Sai';
+            const userChoiceText = allQuestions.find(q => q.questionId === qFeedback.questionId).options[qFeedback.selectedAnswer] || "<i>(Bỏ qua)</i>";
+            const correctChoiceText = allQuestions.find(q => q.questionId === qFeedback.questionId).options[qFeedback.correctAnswer];
+            const originalQuestion = allQuestions.find(q => q.questionId === qFeedback.questionId);
+
+            const explanation = `
+                <div class="p-3 mb-3 border rounded ${isCorrect ? 'border-success-subtle bg-light-green' : 'border-danger-subtle bg-light-red'}">
+                    <p class="mb-1"><strong>Câu ${index + 1}:</strong> ${originalQuestion.questionText}</p>
+                    <p class="mb-1">Bạn đã chọn: <strong class="${statusClass}">${qFeedback.selectedAnswer}. ${userChoiceText} (${statusText})</strong></p>
+
+                    ${!isCorrect ?
+                        `<p class="mb-1">Đáp án đúng: <strong class="text-success">${qFeedback.correctAnswer}. ${correctChoiceText}</strong></p>`
+                        : ''}
+
+                    <p class="text-muted mb-0"><em>Giải thích: ${qFeedback.explanation}</em></p>
+                </div>`;
+            explanationsContainer.append(explanation);
+        });
+
+        // 4. Vẽ biểu đồ
+        renderScoreChart(score, total - score);
+    }
+
+    function renderScoreChart(correct, incorrect) {
+        if(scoreChartInstance) scoreChartInstance.destroy();
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        scoreChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đúng', 'Sai'],
+                datasets: [{
+                    data: [correct, incorrect],
+                    backgroundColor: ['#198754', '#dc3545']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function logQuizResult(quizId, userId, durationInMinutes, score) {
+        if (!userId) {
+            console.error("Không thể ghi log: UserId bị null.");
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/quizzes/submit",
+            contentType: "application/json",
+            data: JSON.stringify({
+                quizId: quizId,
+                userId: userId,
+                durationInMinutes: durationInMinutes,
+                score: score
+            }),
+            success: function() {
+                console.log("Kết quả Quiz đã được ghi log.");
+            },
+            error: function(xhr) {
+                console.error("Lỗi khi ghi log kết quả Quiz:", xhr.responseText);
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

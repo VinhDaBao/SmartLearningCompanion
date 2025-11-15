@@ -205,7 +205,7 @@ public class AiGenerationService {
                         "{\n" +
                         "  \"front\": \"Mặt trước (Thuật ngữ / Câu hỏi)\",\n" +
                         "  \"back\": \"Mặt sau (Định nghĩa / Trả lời)\"\n" +
-                        "}", numCards
+                        "}", 1
         );
 
         String userPrompt = String.format(
@@ -223,7 +223,7 @@ public class AiGenerationService {
         headers.setBearerAuth(openApiKey);
 
         OpenAiRequestDTO requestBody = new OpenAiRequestDTO(
-                "gpt-4o-mini",
+                "openai/gpt-4o",
                 List.of(
                         new ChatMessageDTO("system", systemPrompt),
                         new ChatMessageDTO("user", userPrompt)

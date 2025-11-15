@@ -1,22 +1,36 @@
-// Đặt tại: src/main/java/com/example/smartlearning/service/QuizService.java
 package com.example.smartlearning.service;
 
-
-import com.example.smartlearning.dto.*;
+import com.example.smartlearning.dto.QuestionFeedbackDTO;
+import com.example.smartlearning.dto.QuizDetailDTO;
+import com.example.smartlearning.dto.QuizQuestionDetailDTO;
+import com.example.smartlearning.dto.QuizRequestDTO;
+import com.example.smartlearning.dto.SubmitQuizRequestDTO;
+import com.example.smartlearning.dto.SubmitQuizResponseDTO;
 import com.example.smartlearning.dto.ai.AiQuizQuestionDTO;
-import com.example.smartlearning.model.*;
-import com.example.smartlearning.repository.*;
+import com.example.smartlearning.model.Quiz;
+import com.example.smartlearning.model.QuizQuestions;
+import com.example.smartlearning.model.Subject;
+import com.example.smartlearning.model.Topic;
+import com.example.smartlearning.model.UserQuestionAnswer;
+import com.example.smartlearning.model.UserQuizAttempt;
+import com.example.smartlearning.model.UserSubject;
+import com.example.smartlearning.repository.QuizQuestionsRepository;
+import com.example.smartlearning.repository.QuizRepository;
+import com.example.smartlearning.repository.TopicRepository;
+import com.example.smartlearning.repository.UserQuestionAnswerRepository;
+import com.example.smartlearning.repository.UserQuizAttemptRepository;
+import com.example.smartlearning.repository.UserSubjectRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 @Service
 public class QuizService {
@@ -84,6 +98,7 @@ public class QuizService {
             newQuiz.setUserSubject(userSubject);
             newQuiz.setTitle(requestDTO.getTopic() != null ? "Quiz: " + requestDTO.getTopic() : "Quiz " + subject.getSubjectName());
             newQuiz.setAiModelUsed("gemini-1.5-flash");
+            newQuiz.setGeneratedAt(LocalDateTime.now());
 
             List<QuizQuestions> questionEntities = new ArrayList<>();
             for (AiQuizQuestionDTO aiQ : aiQuestions) {
@@ -119,10 +134,8 @@ public class QuizService {
 
             newQuiz.setQuestions(questionEntities);
 
-            // 5. Lưu vào DB
             Quiz savedQuiz = quizRepository.save(newQuiz);
 
-            // 6. GHI LOG (Giữ nguyên)
             try {
                 learningLogService.logActivity(
                         userSubject.getUser(),
@@ -144,10 +157,6 @@ public class QuizService {
         }
     }
 
-    /**
-     * Lấy chi tiết đầy đủ của một bộ Quiz (bao gồm câu hỏi & đáp án)
-     * (Giữ nguyên logic của bạn)
-     */
     @Transactional(readOnly = true)
     public QuizDetailDTO getQuizDetails(Integer quizId) {
 
@@ -167,13 +176,6 @@ public class QuizService {
                     qDto.setQuestionText(questionEntity.getQuestionText());
                     qDto.setCorrectAnswer(questionEntity.getCorrectAnswer());
                     qDto.setExplanation(questionEntity.getExplanation());
-
-                    // (Gợi ý: Nếu bạn muốn DTO này trả về 'topicName',
-                    // bạn cần thêm trường 'topicName' vào 'QuizQuestionDetailDTO'
-                    // và bỏ comment dòng dưới)
-                    // if (questionEntity.getTopic() != null) {
-                    //     qDto.setTopicName(questionEntity.getTopic().getTopicName());
-                    // }
 
                     try {
                         Object optionsObject = objectMapper.readValue(

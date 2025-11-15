@@ -1,3 +1,1059 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="vi" xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Dashboard - Smart Learning</title>-->
+
+<!--    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">-->
+<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">-->
+
+<!--    <style>-->
+<!--        .loading-spinner {-->
+<!--            display: none;-->
+<!--            width: 1.5rem;-->
+<!--            height: 1.5rem;-->
+<!--            vertical-align: text-bottom;-->
+<!--            border: .2em solid currentColor;-->
+<!--            border-right-color: transparent;-->
+<!--            border-radius: 50%;-->
+<!--            animation: .75s linear infinite spinner-border;-->
+<!--        }-->
+
+<!--        .toast-container {-->
+<!--            z-index: 1100;-->
+<!--        }-->
+
+<!--        .subject-card {-->
+<!--            background: #ffffff;-->
+<!--            border-radius: 1rem;-->
+<!--            border: 1px solid #e3e6f0;-->
+<!--            padding: 1.25rem 1.5rem;-->
+<!--            box-shadow: 0 4px 12px rgba(0,0,0,0.04);-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: space-between;-->
+<!--            gap: 1.25rem;-->
+<!--            transition: all .15s ease-in-out;-->
+<!--        }-->
+
+<!--        .subject-card:hover {-->
+<!--            transform: translateY(-2px);-->
+<!--            box-shadow: 0 8px 20px rgba(0,0,0,0.08);-->
+<!--            border-color: #0d6efd33;-->
+<!--        }-->
+
+<!--        .subject-info h5 {-->
+<!--            margin-bottom: .25rem;-->
+<!--        }-->
+
+<!--        .subject-info .progress-text {-->
+<!--            font-size: 0.9rem;-->
+<!--        }-->
+
+<!--        .subject-actions {-->
+<!--            display: flex;-->
+<!--            flex-wrap: wrap;-->
+<!--            gap: 0.5rem;-->
+<!--        }-->
+
+<!--        .subject-actions .btn {-->
+<!--            min-width: 130px;-->
+<!--            font-weight: 500;-->
+<!--            border-radius: 999px;-->
+<!--        }-->
+
+<!--        #videoResult iframe {-->
+<!--            width: 100%;-->
+<!--            height: 315px;-->
+<!--            border-radius: 0.5rem;-->
+<!--        }-->
+
+<!--        @media (max-width: 768px) {-->
+<!--            .subject-card {-->
+<!--                flex-direction: column;-->
+<!--                align-items: flex-start;-->
+<!--            }-->
+
+<!--            .subject-actions {-->
+<!--                width: 100%;-->
+<!--            }-->
+
+<!--            .subject-actions .btn {-->
+<!--                flex: 1 1 calc(50% - 0.5rem);-->
+<!--            }-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body class="bg-light">-->
+
+<!--<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">-->
+<!--    <div class="container-fluid">-->
+<!--        <a class="navbar-brand" href="/dashboard"><i class="bi bi-brain-fill"></i> Smart Learning</a>-->
+
+<!--        <div class="d-flex align-items-center">-->
+<!--            <span class="navbar-text me-3" id="welcomeMessage"></span>-->
+<!--            <a class="btn btn-outline-light me-2" href="/profile" title="Hồ sơ của tôi">-->
+<!--                <i class="bi bi-person-circle"></i>-->
+<!--            </a>-->
+<!--            <button class="btn btn-outline-light" id="logoutButton" title="Đăng xuất">-->
+<!--                <i class="bi bi-box-arrow-right"></i>-->
+<!--            </button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</nav>-->
+
+<!--<div class="container mt-4">-->
+
+<!--    <h1 class="h3 mb-2">Chào mừng trở lại, <span id="userNameHeader" class="text-primary"></span>!</h1>-->
+
+<!--    <div id="studyNotification" class="mb-3">-->
+<!--    </div>-->
+
+<!--    <div class="card shadow-sm border-0 mb-4">-->
+<!--        <div class="card-body">-->
+<!--            <h5 class="card-title">Bộ lọc biểu đồ</h5>-->
+<!--            <form class="row g-3 align-items-end" id="filterForm">-->
+<!--                <div class="col-md-3">-->
+<!--                    <label for="filterType" class="form-label">Xem theo:</label>-->
+<!--                    <select id="filterType" name="filterType" class="form-select">-->
+<!--                        <option value="week" selected>Tuần</option>-->
+<!--                        <option value="month">Tháng</option>-->
+<!--                        <option value="year">Năm</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+
+<!--                <div id="filterGroupWeek" class="col-md-6">-->
+<!--                    <label for="filterDate" class="form-label">Chọn mốc ngày (Tuần kết thúc vào):</label>-->
+<!--                    <input type="date" id="filterDate" name="filterDate" class="form-control">-->
+<!--                </div>-->
+
+<!--                <div id="filterGroupMonth" class="col-md-6 row g-3" style="display: none;">-->
+<!--                    <div class="col-6">-->
+<!--                        <label for="filterMonth" class="form-label">Chọn tháng:</label>-->
+<!--                        <select id="filterMonth" name="month" class="form-select">-->
+<!--                            <option value="1">Tháng 1</option>-->
+<!--                            <option value="2">Tháng 2</option>-->
+<!--                            <option value="3">Tháng 3</option>-->
+<!--                            <option value="4">Tháng 4</option>-->
+<!--                            <option value="5">Tháng 5</option>-->
+<!--                            <option value="6">Tháng 6</option>-->
+<!--                            <option value="7">Tháng 7</option>-->
+<!--                            <option value="8">Tháng 8</option>-->
+<!--                            <option value="9">Tháng 9</option>-->
+<!--                            <option value="10">Tháng 10</option>-->
+<!--                            <option value="11">Tháng 11</option>-->
+<!--                            <option value="12">Tháng 12</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                    <div class="col-6">-->
+<!--                        <label for="filterYearMonth" class="form-label">Năm:</label>-->
+<!--                        <select id="filterYearMonth" name="yearMonth" class="form-select"></select>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                <div id="filterGroupYear" class="col-md-6" style="display: none;">-->
+<!--                    <label for="filterYear" class="form-label">Chọn năm:</label>-->
+<!--                    <select id="filterYear" name="year" class="form-select"></select>-->
+<!--                </div>-->
+
+<!--                <div class="col-md-3">-->
+<!--                    <button type="submit" class="btn btn-primary w-100">-->
+<!--                        <i class="bi bi-funnel-fill"></i> Lọc-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div class="row mb-4">-->
+<!--        <div class="col-lg-7 mb-3 mb-lg-0">-->
+<!--            <div class="card shadow-sm border-0 h-100">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title"><i class="bi bi-bar-chart-line-fill text-primary"></i> Thời gian học (phút)</h5>-->
+<!--                    <div id="timeChartLoading" class="text-center">-->
+<!--                        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>-->
+<!--                    </div>-->
+<!--                    <canvas id="timeChart" style="display: none;"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="col-lg-5">-->
+<!--            <div class="card shadow-sm border-0 h-100">-->
+<!--                <div class="card-body">-->
+<!--                    <h5 class="card-title"><i class="bi bi-pie-chart-fill text-success"></i> Thống kê hoạt động</h5>-->
+<!--                    <div id="activityChartLoading" class="text-center">-->
+<!--                        <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>-->
+<!--                    </div>-->
+<!--                    <canvas id="activityChart" style="display: none; max-height: 250px;"></canvas>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <hr class="my-4">-->
+<!--    <h2><i class="bi bi-journal-bookmark-fill text-info"></i> Môn học của tôi</h2>-->
+<!--    <div class="row" id="mySubjectsList">-->
+<!--        <div class="col-12 text-center" id="mySubjectsLoading">-->
+<!--            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>-->
+<!--            <p>Đang tải các môn học của bạn...</p>-->
+<!--        </div>-->
+<!--        <div class="col-12" id="noMySubjects" style="display: none;">-->
+<!--            <div class="alert alert-info">Bạn chưa đăng ký môn học nào. Hãy khám phá các môn học bên dưới!</div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <hr class="my-4">-->
+<!--    <h2><i class="bi bi-search text-warning"></i> Khám phá môn học</h2>-->
+<!--    <div class="row" id="exploreSubjectsList">-->
+<!--        <div class="col-12 text-center" id="exploreSubjectsLoading">-->
+<!--            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>-->
+<!--            <p>Đang tải danh sách môn học...</p>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="modal fade" id="planModal" tabindex="-1">-->
+<!--    <div class="modal-dialog">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title"><i class="bi bi-calendar-check"></i> Tạo Lộ trình học</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="planForm">-->
+<!--                    <input type="hidden" id="planUserSubjectId">-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="customPrompt" class="form-label">Yêu cầu tùy chỉnh:</label>-->
+<!--                        <textarea class="form-control" id="customPrompt" rows="3"-->
+<!--                                  placeholder="Ví dụ: Tập trung vào thực hành, hoặc tạo lộ trình trong 3 tuần..."></textarea>-->
+<!--                    </div>-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="planLectureFile" class="form-label">-->
+<!--                            Tải file bài giảng / slide (tuỳ chọn)-->
+<!--                        </label>-->
+<!--                        <input class="form-control" type="file" id="planLectureFile"-->
+<!--                               accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">-->
+<!--                        <div class="form-text">-->
+<!--                            AI sẽ đọc nội dung file này để đề xuất lộ trình sát với bài giảng của bạn hơn.-->
+<!--                        </div>-->
+<!--                    </div>-->
+
+<!--                    <div id="planResult" class="mt-3 p-3 bg-light border rounded"-->
+<!--                         style="display: none; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"></div>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>-->
+<!--                <button type="button" class="btn btn-primary" id="submitPlanButton">-->
+<!--                    <span class="loading-spinner" role="status"></span> <i class="bi bi-magic"></i> Tạo-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="modal fade" id="quizModal" tabindex="-1">-->
+<!--    <div class="modal-dialog">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title"><i class="bi bi-patch-question-fill"></i> Tạo Quiz</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="quizForm">-->
+<!--                    <input type="hidden" id="quizUserSubjectId">-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="quizTopic" class="form-label">Chủ đề Quiz (Tùy chọn):</label>-->
+<!--                        <input type="text" class="form-control" id="quizTopic"-->
+<!--                               placeholder="Ví dụ: Chương 1: Giới thiệu, hoặc để trống">-->
+<!--                    </div>-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="quizNumQuestions" class="form-label">Số lượng câu hỏi:</label>-->
+<!--                        <select class="form-select" id="quizNumQuestions">-->
+<!--                            <option value="5">5 câu</option>-->
+<!--                            <option value="10" selected>10 câu</option>-->
+<!--                            <option value="15">15 câu</option>-->
+<!--                            <option value="20">20 câu</option>-->
+<!--                            <option value="25">25 câu</option>-->
+<!--                            <option value="30">30 câu</option>-->
+<!--                            <option value="35">35 câu</option>-->
+<!--                            <option value="40">40 câu</option>-->
+<!--                            <option value="45">45 câu</option>-->
+<!--                            <option value="50">50 câu</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="quizLectureFile" class="form-label">-->
+<!--                            Tải file bài giảng để tạo câu hỏi (tuỳ chọn)-->
+<!--                        </label>-->
+<!--                        <input class="form-control" type="file" id="quizLectureFile"-->
+<!--                               accept=".pdf,.ppt,.pptx,.doc,.docx,.txt">-->
+<!--                        <div class="form-text">-->
+<!--                            Nên chọn đúng slide / chương bạn muốn tạo Quiz để câu hỏi sát nội dung nhất.-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>-->
+<!--                <button type="button" class="btn btn-success" id="submitQuizButton">-->
+<!--                    <span class="loading-spinner" role="status"></span> <i class="bi bi-magic"></i> Tạo Quiz-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="modal fade" id="flashcardModal" tabindex="-1">-->
+<!--    <div class="modal-dialog">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title"><i class="bi bi-card-checklist"></i> Tạo Flashcard</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="flashcardForm">-->
+<!--                    <input type="hidden" id="flashcardUserSubjectId">-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="flashcardTitle" class="form-label">Tiêu đề bộ Flashcard:</label>-->
+<!--                        <input type="text" class="form-control" id="flashcardTitle" required placeholder="Ví dụ: Các thuật ngữ Spring Boot">-->
+<!--                    </div>-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="flashcardTopic" class="form-label">Chủ đề (Tùy chọn):</label>-->
+<!--                        <input type="text" class="form-control" id="flashcardTopic" placeholder="Ví dụ: Annotations, hoặc để trống">-->
+<!--                    </div>-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="flashcardNumCards" class="form-label">Số lượng thẻ:</label>-->
+<!--                        <select class="form-select" id="flashcardNumCards">-->
+<!--                            <option value="10" selected>10 thẻ</option>-->
+<!--                            <option value="20">20 thẻ</option>-->
+<!--                            <option value="30">30 thẻ</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>-->
+<!--                <button type="button" class="btn btn-warning" id="submitFlashcardButton">-->
+<!--                    <span class="loading-spinner" role="status"></span> <i class="bi bi-magic"></i> Tạo Flashcard-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="modal fade" id="logSessionModal" tabindex="-1">-->
+<!--    <div class="modal-dialog">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title">-->
+<!--                    <i class="bi bi-clock-history"></i> Ghi lại thời gian học-->
+<!--                </h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="logSessionForm">-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="logSubject" class="form-label">Môn học</label>-->
+<!--                        <select class="form-select" id="logSubject" required>-->
+<!--                            <option value="" disabled selected>&#45;&#45; Chọn môn học &#45;&#45;</option>-->
+<!--                        </select>-->
+<!--                    </div>-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="logDuration" class="form-label">-->
+<!--                            Thời gian học (phút)-->
+<!--                        </label>-->
+<!--                        <input type="number" min="1" class="form-control"-->
+<!--                               id="logDuration" placeholder="Ví dụ: 30" required>-->
+<!--                    </div>-->
+
+<!--                    <div class="mb-3">-->
+<!--                        <label for="logDetails" class="form-label">Ghi chú (tuỳ chọn)</label>-->
+<!--                        <textarea class="form-control" id="logDetails" rows="3"-->
+<!--                                  placeholder="Ví dụ: Ôn lại Chương 1, làm bài tập ôn tập..."></textarea>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--            <div class="modal-footer">-->
+<!--                <button type="button"-->
+<!--                        class="btn btn-secondary"-->
+<!--                        data-bs-dismiss="modal">Đóng</button>-->
+
+<!--                <button type="button"-->
+<!--                        class="btn btn-success"-->
+<!--                        id="submitLogButton">-->
+<!--                    <span class="loading-spinner" role="status"></span>-->
+<!--                    <i class="bi bi-save"></i> Lưu-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="modal fade" id="videoModal" tabindex="-1">-->
+<!--    <div class="modal-dialog modal-lg">-->
+<!--        <div class="modal-content">-->
+<!--            <div class="modal-header">-->
+<!--                <h5 class="modal-title"><i class="bi bi-youtube text-danger"></i> Gợi ý Video YouTube</h5>-->
+<!--                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>-->
+<!--            </div>-->
+<!--            <div class="modal-body">-->
+<!--                <form id="videoForm">-->
+<!--                    <div class="mb-3">-->
+<!--                        <label for="videoTopic" class="form-label">Chủ đề video:</label>-->
+<!--                        <div class="input-group">-->
+<!--                            <input type="text" class="form-control" id="videoTopic" required placeholder="Ví dụ: Spring Boot JWT">-->
+<!--                            <button type="submit" class="btn btn-danger" id="submitVideoSearch">-->
+<!--                                <span class="loading-spinner" role="status"></span>-->
+<!--                                <i class="bi bi-search"></i> Tìm-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--                <hr>-->
+<!--                <div id="videoResult" class="text-center">-->
+<!--                    <p class="text-muted">Nhập chủ đề và nhấn tìm kiếm...</p>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">-->
+<!--</div>-->
+
+
+<!--<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+
+<!--<script>-->
+<!--    let currentUserId = null;-->
+<!--    let timeChartInstance = null;-->
+<!--    let activityChartInstance = null;-->
+<!--    let planModal = null;-->
+<!--    let quizModal = null;-->
+<!--    let flashcardModal = null;-->
+<!--    let logSessionModal = null;-->
+<!--    let videoModal = null;-->
+<!--    let toastCount = 0;-->
+
+<!--    $(document).ready(function() {-->
+<!--        const token = localStorage.getItem("jwtToken");-->
+<!--        const username = localStorage.getItem("username");-->
+<!--        if (!token) { window.location.href = "/login"; return; }-->
+
+<!--        $.ajaxSetup({-->
+<!--            beforeSend: function(xhr) {-->
+<!--                xhr.setRequestHeader('Authorization', 'Bearer ' + token);-->
+<!--            }-->
+<!--        });-->
+
+<!--        $("#welcomeMessage").text("Chào, " + username);-->
+<!--        $("#userNameHeader").text(username);-->
+<!--        $("#logoutButton").on("click", logout);-->
+
+<!--        planModal = new bootstrap.Modal(document.getElementById('planModal'));-->
+<!--        quizModal = new bootstrap.Modal(document.getElementById('quizModal'));-->
+<!--        flashcardModal = new bootstrap.Modal(document.getElementById('flashcardModal'));-->
+<!--        logSessionModal = new bootstrap.Modal(document.getElementById('logSessionModal'));-->
+<!--        videoModal = new bootstrap.Modal(document.getElementById('videoModal'));-->
+
+<!--        setupFilters();-->
+
+<!--        loadUserData(username);-->
+
+<!--        $("#submitPlanButton").on("click", handleGeneratePlan);-->
+<!--        $("#submitQuizButton").on("click", handleGenerateQuiz);-->
+<!--        $("#submitFlashcardButton").on("click", handleGenerateFlashcard);-->
+<!--        $("#submitLogButton").on("click", handleLogSession);-->
+
+<!--        $("#videoForm").on("submit", function(e) {-->
+<!--            e.preventDefault();-->
+<!--            handleVideoSearch();-->
+<!--        });-->
+
+<!--        $("#filterForm").on("submit", function(e) {-->
+<!--            e.preventDefault();-->
+<!--            if (currentUserId) {-->
+<!--                loadDashboardData(currentUserId);-->
+<!--            }-->
+<!--        });-->
+
+<!--        $("#filterType").on("change", handleFilterTypeChange);-->
+<!--    });-->
+
+<!--    function logout() {-->
+<!--        localStorage.removeItem("jwtToken");-->
+<!--        localStorage.removeItem("username");-->
+<!--        window.location.href = "/login";-->
+<!--    }-->
+
+<!--    function setupFilters() {-->
+<!--        const today = new Date();-->
+<!--        const yyyy = today.getFullYear();-->
+<!--        const mm = today.getMonth() + 1;-->
+
+<!--        $("#filterDate").val(today.toISOString().split('T')[0]);-->
+
+<!--        $("#filterMonth").val(mm);-->
+
+<!--        const yearSelects = $("#filterYearMonth, #filterYear");-->
+<!--        yearSelects.empty();-->
+<!--        for (let i = 0; i < 5; i++) {-->
+<!--            const year = yyyy - i;-->
+<!--            yearSelects.append(`<option value="${year}">${year}</option>`);-->
+<!--        }-->
+<!--    }-->
+
+<!--    function handleFilterTypeChange() {-->
+<!--        const filterType = $("#filterType").val();-->
+<!--        $("#filterGroupWeek").hide();-->
+<!--        $("#filterGroupMonth").hide();-->
+<!--        $("#filterGroupYear").hide();-->
+
+<!--        if (filterType === 'week') {-->
+<!--            $("#filterGroupWeek").show();-->
+<!--        } else if (filterType === 'month') {-->
+<!--            $("#filterGroupMonth").show();-->
+<!--        } else if (filterType === 'year') {-->
+<!--            $("#filterGroupYear").show();-->
+<!--        }-->
+<!--    }-->
+
+<!--    function loadUserData(username) {-->
+<!--        $.ajax({-->
+<!--            type: "GET", url: `http://localhost:8080/api/users/${username}`,-->
+<!--            success: function(userDTO) {-->
+<!--                currentUserId = userDTO.userId;-->
+<!--                loadDashboardData(currentUserId);-->
+<!--                loadSubjectsAndEnrollments(currentUserId);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                if (xhr.status === 401 || xhr.status === 403) logout();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function loadDashboardData(userId) {-->
+<!--        $("#timeChart").hide();-->
+<!--        $("#activityChart").hide();-->
+<!--        $("#timeChartLoading").show();-->
+<!--        $("#activityChartLoading").show();-->
+<!--        $("#studyNotification").empty();-->
+
+<!--        const filterType = $("#filterType").val();-->
+<!--        let filterDate;-->
+
+<!--        if (filterType === 'week') {-->
+<!--            filterDate = $("#filterDate").val();-->
+<!--        } else if (filterType === 'month') {-->
+<!--            const year = $("#filterYearMonth").val();-->
+<!--            const month = $("#filterMonth").val().padStart(2, '0');-->
+<!--            filterDate = `${year}-${month}-01`;-->
+<!--        } else if (filterType === 'year') {-->
+<!--            const year = $("#filterYear").val();-->
+<!--            filterDate = `${year}-01-01`;-->
+<!--        }-->
+
+<!--        $.ajax({-->
+<!--            type: "GET",-->
+<!--            url: `http://localhost:8080/api/dashboard/${userId}`,-->
+<!--            data: {-->
+<!--                filterType: filterType,-->
+<!--                filterDate: filterDate-->
+<!--            },-->
+<!--            success: function(data) {-->
+<!--                renderTimeChart(data.timeLabels || [], data.timeData || []);-->
+<!--                renderActivityChart(data.activityCounts || {});-->
+
+<!--                if (data.studyNotification) {-->
+<!--                    $("#studyNotification").html(`<div class="alert alert-info">${data.studyNotification}</div>`);-->
+<!--                }-->
+
+<!--                $("#timeChart").show();-->
+<!--                $("#activityChart").show();-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                console.error("Lỗi tải dashboard:", xhr.responseText);-->
+<!--                $("#studyNotification").html(`<div class="alert alert-danger">Không thể tải dữ liệu dashboard.</div>`);-->
+<!--            },-->
+<!--            complete: function() {-->
+<!--                $("#timeChartLoading").hide();-->
+<!--                $("#activityChartLoading").hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    async function loadSubjectsAndEnrollments(userId) {-->
+<!--        $("#mySubjectsLoading").show();-->
+<!--        $("#exploreSubjectsLoading").show();-->
+<!--        $("#noMySubjects").hide();-->
+
+<!--        const mySubjectsListDiv = $("#mySubjectsList");-->
+<!--        const exploreSubjectsListDiv = $("#exploreSubjectsList");-->
+<!--        const logSubjectSelect = $("#logSubject");-->
+
+<!--        mySubjectsListDiv.empty();-->
+<!--        exploreSubjectsListDiv.empty();-->
+<!--        logSubjectSelect.empty().append('<option value="" disabled selected>&#45;&#45; Chọn môn học &#45;&#45;</option>');-->
+
+<!--        try {-->
+<!--            const enrolledSubjects = await $.ajax({ url: `http://localhost:8080/api/users/${userId}/subjects` });-->
+<!--            const enrolledMap = new Map();-->
+
+<!--            if (enrolledSubjects.length === 0) {-->
+<!--                $("#noMySubjects").show();-->
+<!--            } else {-->
+<!--                enrolledSubjects.forEach(us => {-->
+<!--                    enrolledMap.set(us.subject.subjectId, us.id);-->
+
+<!--                    const cardHtml = `-->
+<!--                        <div class="col-12 mb-3">-->
+<!--                            <div class="subject-card">-->
+<!--                                <div class="subject-info">-->
+<!--                                    <h5 class="mb-1">${us.subject.subjectName}</h5>-->
+<!--                                    <p class="text-muted progress-text mb-0">-->
+<!--                                        Đã đăng ký · Tiến độ: <strong>${us.progressPercentage}%</strong>-->
+<!--                                    </p>-->
+<!--                                </div>-->
+<!--                                <div class="subject-actions">-->
+<!--                                    <button class="btn btn-outline-danger"-->
+<!--                                            onclick="openVideoModal('${us.subject.subjectName}')">-->
+<!--                                        <i class="bi bi-youtube me-1"></i> Video-->
+<!--                                    </button>-->
+<!--                                    <button class="btn btn-outline-info"-->
+<!--                                            onclick="viewSubjectContent(${us.id})">-->
+<!--                                        <i class="bi bi-book me-1"></i> Học-->
+<!--                                    </button>-->
+<!--                                    <button class="btn btn-outline-primary"-->
+<!--                                            onclick="openPlanModal(${us.id})">-->
+<!--                                        <i class="bi bi-calendar-check me-1"></i> Plan-->
+<!--                                    </button>-->
+<!--                                    <button class="btn btn-outline-success"-->
+<!--                                            onclick="openQuizModal(${us.id})">-->
+<!--                                        <i class="bi bi-patch-question me-1"></i> Quiz-->
+<!--                                    </button>-->
+<!--                                    <button class="btn btn-outline-warning"-->
+<!--                                            onclick="openFlashcardModal(${us.id})">-->
+<!--                                        <i class="bi bi-card-checklist me-1"></i> Flashcard-->
+<!--                                    </button>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    `;-->
+<!--                    mySubjectsListDiv.append(cardHtml);-->
+<!--                    logSubjectSelect.append(-->
+<!--                        `<option value="${us.id}">${us.subject.subjectName}</option>`-->
+<!--                    );-->
+<!--                });-->
+<!--            }-->
+
+<!--            const allSubjects = await $.ajax({ url: "http://localhost:8080/api/subjects" });-->
+
+<!--            let exploreCount = 0;-->
+<!--            allSubjects.forEach(subject => {-->
+<!--                if (!enrolledMap.has(subject.subjectId)) {-->
+<!--                    exploreCount++;-->
+<!--                    const category = subject.subjectCategory || 'Khác';-->
+<!--                    const categoryBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill mb-2">${category}</span>`;-->
+<!--                    const description = subject.description ? subject.description.substring(0, 100) + '...' : '';-->
+
+<!--                    const cardHtml = `-->
+<!--                        <div class="col-md-6 col-lg-4 mb-4">-->
+<!--                            <div class="card shadow-sm border-0 h-100">-->
+<!--                                <div class="card-body d-flex flex-column">-->
+<!--                                    <div>-->
+<!--                                        ${categoryBadge}-->
+<!--                                        <h5 class="card-title">${subject.subjectName}</h5>-->
+<!--                                    </div>-->
+<!--                                    <p class="card-text text-muted">${description}</p>-->
+<!--                                    <div class="mt-auto">-->
+<!--                                        <button class="btn btn-outline-primary w-100" id="enrollBtn-${subject.subjectId}" onclick="enroll(${subject.subjectId})">-->
+<!--                                            <span class="loading-spinner" id="enrollSpinner-${subject.subjectId}"></span>-->
+<!--                                            <i class="bi bi-plus-circle"></i> Đăng ký học-->
+<!--                                        </button>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    `;-->
+<!--                    exploreSubjectsListDiv.append(cardHtml);-->
+<!--                }-->
+<!--            });-->
+
+<!--            if (exploreCount === 0) {-->
+<!--                exploreSubjectsListDiv.append('<div class="col-12"><p class="text-muted">Bạn đã đăng ký tất cả các môn học!</p></div>');-->
+<!--            }-->
+
+<!--        } catch (xhr) {-->
+<!--            console.error("Lỗi khi tải môn học:", xhr.responseText);-->
+<!--            mySubjectsListDiv.html('<div class="alert alert-danger">Không thể tải danh sách môn học.</div>');-->
+<!--        } finally {-->
+<!--            $("#mySubjectsLoading").hide();-->
+<!--            $("#exploreSubjectsLoading").hide();-->
+<!--        }-->
+<!--    }-->
+
+<!--    function enroll(subjectId) {-->
+<!--        const btn = $(`#enrollBtn-${subjectId}`);-->
+<!--        const spinner = $(`#enrollSpinner-${subjectId}`);-->
+<!--        btn.prop('disabled', true);-->
+<!--        spinner.show();-->
+
+<!--        $.ajax({-->
+<!--            type: "POST", url: "http://localhost:8080/api/enroll",-->
+<!--            contentType: "application/json",-->
+<!--            data: JSON.stringify({ userId: currentUserId, subjectId: subjectId }),-->
+<!--            success: function(userSubjectDTO) {-->
+<!--                showToast("Đăng ký môn học thành công!");-->
+<!--                loadSubjectsAndEnrollments(currentUserId);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                showToast("Lỗi: " + xhr.responseText, "error");-->
+<!--                btn.prop('disabled', false);-->
+<!--                spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function openPlanModal(userSubjectId) {-->
+<!--        $("#planUserSubjectId").val(userSubjectId);-->
+<!--        $("#planForm")[0].reset();-->
+<!--        $("#planResult").hide().empty();-->
+<!--        $("#submitPlanButton").prop('disabled', false).find(".loading-spinner").hide();-->
+<!--        planModal.show();-->
+<!--    }-->
+
+<!--    function openQuizModal(userSubjectId) {-->
+<!--        $("#quizUserSubjectId").val(userSubjectId);-->
+<!--        $("#quizForm")[0].reset();-->
+<!--        $("#quizResult").hide().empty();-->
+<!--        $("#submitQuizButton").prop('disabled', false).find(".loading-spinner").hide();-->
+<!--        quizModal.show();-->
+<!--    }-->
+
+<!--    function openFlashcardModal(userSubjectId) {-->
+<!--        $("#flashcardUserSubjectId").val(userSubjectId);-->
+<!--        $("#flashcardForm")[0].reset();-->
+<!--        $("#submitFlashcardButton").prop('disabled', false).find(".loading-spinner").hide();-->
+<!--        flashcardModal.show();-->
+<!--    }-->
+
+<!--    function openVideoModal(subjectName) {-->
+<!--        $("#videoTopic").val(subjectName);-->
+<!--        $("#videoResult").html('<p class="text-muted">Nhấn tìm kiếm để xem gợi ý...</p>');-->
+<!--        videoModal.show();-->
+<!--    }-->
+
+<!--    function viewSubjectContent(userSubjectId) {-->
+<!--        window.location.href = "/my-subject/" + userSubjectId;-->
+<!--    }-->
+
+<!--    function handleGeneratePlan() {-->
+<!--        const btn = $("#submitPlanButton");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+<!--        btn.prop('disabled', true);-->
+<!--        spinner.show();-->
+<!--        $("#planResult").hide().empty();-->
+
+<!--        const requestObj = {-->
+<!--            userSubjectId: $("#planUserSubjectId").val(),-->
+<!--            customPrompt: $("#customPrompt").val()-->
+<!--        };-->
+
+<!--        const formData = new FormData();-->
+<!--        formData.append(-->
+<!--            "request",-->
+<!--            new Blob([JSON.stringify(requestObj)], { type: "application/json" })-->
+<!--        );-->
+
+<!--        const fileInput = $("#planLectureFile")[0];-->
+<!--        if (fileInput.files && fileInput.files[0]) {-->
+<!--            formData.append("lectureFile", fileInput.files[0]);-->
+<!--        }-->
+
+<!--        $.ajax({-->
+<!--            type: "POST",-->
+<!--            url: "http://localhost:8080/api/study-plans/generate",-->
+<!--            data: formData,-->
+<!--            processData: false,-->
+<!--            contentType: false,-->
+<!--            success: function(planDTO) {-->
+<!--                $("#planResult").text(planDTO.planContent).show();-->
+<!--                showToast("Tạo lộ trình thành công!");-->
+<!--                loadDashboardData(currentUserId);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                $("#planResult").text("Lỗi: " + xhr.responseText).show();-->
+<!--            },-->
+<!--            complete: function() {-->
+<!--                btn.prop('disabled', false);-->
+<!--                spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function handleGenerateQuiz() {-->
+<!--        const btn = $("#submitQuizButton");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+<!--        btn.prop('disabled', true);-->
+<!--        spinner.show();-->
+
+<!--        const requestObj = {-->
+<!--            userSubjectId: $("#quizUserSubjectId").val(),-->
+<!--            topic: $("#quizTopic").val() || null,-->
+<!--            numberOfQuestions: $("#quizNumQuestions").val()-->
+<!--        };-->
+
+<!--        const formData = new FormData();-->
+<!--        formData.append(-->
+<!--            "request",-->
+<!--            new Blob([JSON.stringify(requestObj)], { type: "application/json" })-->
+<!--        );-->
+
+<!--        const fileInput = $("#quizLectureFile")[0];-->
+<!--        if (fileInput.files && fileInput.files[0]) {-->
+<!--            formData.append("lectureFile", fileInput.files[0]);-->
+<!--        }-->
+
+<!--        $.ajax({-->
+<!--            type: "POST",-->
+<!--            url: "http://localhost:8080/api/quizzes/generate",-->
+<!--            data: formData,-->
+<!--            processData: false,-->
+<!--            contentType: false,-->
+<!--            success: function(quizDTO) {-->
+<!--                showToast(`Tạo Quiz thành công! Chuẩn bị làm bài...`);-->
+<!--                loadDashboardData(currentUserId);-->
+
+<!--                setTimeout(function() {-->
+<!--                    window.location.href = "/quiz/" + quizDTO.quizId;-->
+<!--                }, 1000);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                alert("Lỗi tạo Quiz: " + xhr.responseText);-->
+<!--                btn.prop('disabled', false);-->
+<!--                spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function handleGenerateFlashcard() {-->
+<!--        const btn = $("#submitFlashcardButton");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+<!--        const title = $("#flashcardTitle").val();-->
+<!--        if (!title) { alert("Vui lòng nhập Tiêu đề!"); return; }-->
+
+<!--        btn.prop('disabled', true); spinner.show();-->
+
+<!--        $.ajax({-->
+<!--            type: "POST", url: "http://localhost:8080/api/flashcards/generate",-->
+<!--            contentType: "application/json",-->
+<!--            data: JSON.stringify({-->
+<!--                userSubjectId: $("#flashcardUserSubjectId").val(),-->
+<!--                title: title,-->
+<!--                topic: $("#flashcardTopic").val() || null,-->
+<!--                numberOfCards: $("#flashcardNumCards").val()-->
+<!--            }),-->
+<!--            success: function(setDTO) {-->
+<!--                showToast(`Tạo thành công: "${setDTO.title}"! Đang tải...`);-->
+<!--                loadDashboardData(currentUserId);-->
+<!--                setTimeout(function() {-->
+<!--                    window.location.href = "/flashcards/" + setDTO.setId;-->
+<!--                }, 1000);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                alert("Lỗi tạo Flashcard: " + xhr.responseText);-->
+<!--                btn.prop('disabled', false);-->
+<!--                spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function handleLogSession() {-->
+<!--        const btn = $("#submitLogButton");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+
+<!--        const logData = {-->
+<!--            userId: currentUserId,-->
+<!--            userSubjectId: $("#logSubject").val(),-->
+<!--            durationMinutes: $("#logDuration").val(),-->
+<!--            details: $("#logDetails").val() || null-->
+<!--        };-->
+
+<!--        if (!logData.userSubjectId || !logData.durationMinutes || logData.durationMinutes < 1) {-->
+<!--            alert("Vui lòng chọn môn học và nhập thời gian hợp lệ (lớn hơn 0 phút).");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        btn.prop('disabled', true); spinner.show();-->
+
+<!--        $.ajax({-->
+<!--            type: "POST",-->
+<!--            url: "http://localhost:8080/api/log/session",-->
+<!--            contentType: "application/json",-->
+<!--            data: JSON.stringify(logData),-->
+<!--            success: function() {-->
+<!--                showToast("Ghi lại thời gian học thành công!");-->
+<!--                logSessionModal.hide();-->
+<!--                $("#logSessionForm")[0].reset();-->
+
+<!--                loadDashboardData(currentUserId);-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                alert("Lỗi khi log: " + xhr.responseText);-->
+<!--            },-->
+<!--            complete: function() {-->
+<!--                btn.prop('disabled', false); spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function handleVideoSearch() {-->
+<!--        const btn = $("#submitVideoSearch");-->
+<!--        const spinner = btn.find(".loading-spinner");-->
+<!--        const topic = $("#videoTopic").val();-->
+<!--        const resultDiv = $("#videoResult");-->
+
+<!--        if (!topic) {-->
+<!--            alert("Vui lòng nhập chủ đề!");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        btn.prop('disabled', true); spinner.show();-->
+<!--        resultDiv.html('<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');-->
+
+<!--        $.ajax({-->
+<!--            type: "GET",-->
+<!--            url: `http://localhost:8080/api/ai/suggest-video`,-->
+<!--            data: { topic: topic },-->
+<!--            success: function(data) {-->
+<!--                if (data && data.embedUrl) {-->
+<!--                    const videoHtml = `-->
+<!--                        <h5 class="mb-3">${data.title}</h5>-->
+<!--                        <a href="${data.embedUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-danger mb-3">-->
+<!--                            <i class="bi bi-youtube"></i> Mở trên YouTube-->
+<!--                        </a>-->
+<!--                    `;-->
+<!--                    resultDiv.html(videoHtml);-->
+<!--                } else {-->
+<!--                    resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');-->
+<!--                }-->
+<!--            },-->
+<!--            error: function(xhr) {-->
+<!--                resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`);-->
+<!--            },-->
+<!--            complete: function() {-->
+<!--                btn.prop('disabled', false); spinner.hide();-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function renderTimeChart(labels, data) {-->
+<!--        if (timeChartInstance) {-->
+<!--            timeChartInstance.destroy();-->
+<!--        }-->
+<!--        const ctx = document.getElementById('timeChart').getContext('2d');-->
+<!--        timeChartInstance = new Chart(ctx, {-->
+<!--            type: 'bar',-->
+<!--            data: {-->
+<!--                labels: labels,-->
+<!--                datasets: [{-->
+<!--                    label: 'Số phút đã học',-->
+<!--                    data: data,-->
+<!--                    backgroundColor: 'rgba(0, 123, 255, 0.6)',-->
+<!--                    barPercentage: 0.5,-->
+<!--                    categoryPercentage: 0.8-->
+<!--                }]-->
+<!--            },-->
+<!--            options: {-->
+<!--                scales: {-->
+<!--                    y: {-->
+<!--                        beginAtZero: true-->
+<!--                    }-->
+<!--                },-->
+<!--                responsive: true-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function renderActivityChart(activityData) {-->
+<!--        if(activityChartInstance) activityChartInstance.destroy();-->
+
+<!--        const activityLabels = {-->
+<!--            "FLASHCARD_GENERATED": "Tạo Flashcard",-->
+<!--            "QUIZ_GENERATED": "Tạo Quiz",-->
+<!--            "QUIZ_COMPLETED": "Làm Quiz",-->
+<!--            "PLAN_GENERATED": "Tạo Kế hoạch",-->
+<!--            "STUDY_SESSION": "Phiên học",-->
+<!--            "DEFAULT": "Hoạt động khác"-->
+<!--        };-->
+
+<!--        const translatedLabels = Object.keys(activityData).map(key => activityLabels[key] || activityLabels["DEFAULT"]);-->
+<!--        const values = Object.values(activityData);-->
+
+<!--        const backgroundColors = [-->
+<!--            'rgba(0, 123, 255, 0.7)',-->
+<!--            'rgba(40, 167, 69, 0.7)',-->
+<!--            'rgba(255, 193, 7, 0.7)',-->
+<!--            'rgba(220, 53, 69, 0.7)',-->
+<!--            'rgba(108, 117, 125, 0.7)'-->
+<!--        ];-->
+
+<!--        const ctx = document.getElementById('activityChart').getContext('2d');-->
+<!--        activityChartInstance = new Chart(ctx, {-->
+<!--            type: 'doughnut',-->
+<!--            data: {-->
+<!--                labels: translatedLabels,-->
+<!--                datasets: [{-->
+<!--                    data: values,-->
+<!--                    backgroundColor: backgroundColors-->
+<!--                }]-->
+<!--            },-->
+<!--            options: {-->
+<!--                responsive: true,-->
+<!--                maintainAspectRatio: false-->
+<!--            }-->
+<!--        });-->
+<!--    }-->
+
+<!--    function showToast(message, type = "success") {-->
+<!--        const toastId = "toast-" + (toastCount++);-->
+<!--        const bgClass = type === "success" ? "bg-success" : "bg-danger";-->
+
+<!--        const toastHtml = `-->
+<!--            <div id="${toastId}" class="toast align-items:center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">-->
+<!--                <div class="d-flex">-->
+<!--                    <div class="toast-body">-->
+<!--                        <i class="bi bi-check-circle-fill"></i> ${message}-->
+<!--                    </div>-->
+<!--                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--       `;-->
+
+<!--        $("#toastContainer").append(toastHtml);-->
+
+<!--        const toastElement = new bootstrap.Toast(document.getElementById(toastId));-->
+<!--        toastElement.show();-->
+
+<!--        document.getElementById(toastId).addEventListener('hidden.bs.toast', function () {-->
+<!--            $(this).remove();-->
+<!--        });-->
+<!--    }-->
+
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -35,9 +1091,6 @@
             justify-content: space-between;
             gap: 1.25rem;
             transition: all .15s ease-in-out;
-            /* Thêm z-index để nó nổi lên trên thẻ AI */
-            position: relative;
-            z-index: 2;
         }
 
         .subject-card:hover {
@@ -66,6 +1119,12 @@
             border-radius: 999px;
         }
 
+        #videoResult iframe {
+            width: 100%;
+            height: 315px;
+            border-radius: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .subject-card {
                 flex-direction: column;
@@ -80,126 +1139,6 @@
                 flex: 1 1 calc(50% - 0.5rem);
             }
         }
-
-        /* --- CSS CHO THẺ ĐỀ XUẤT THÔNG MINH (ĐÃ THÊM) --- */
-
-        .adaptive-recommendation-box {
-            font-family: Arial, sans-serif;
-            background: #f0f4f9; /* Màu nền xanh nhạt */
-            border-radius: 0 0 12px 12px; /* Chỉ bo góc dưới */
-            padding: 24px;
-            margin-top: -10px; /* Hơi chồng lên thẻ môn học */
-            margin-bottom: 15px;
-            box-shadow: 0 8px 20px rgba(0, 50, 150, 0.1);
-            border: 1px solid #dbe6f0;
-            /* Thẻ AI nằm bên dưới thẻ môn học */
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 1. Trạng thái Đang tải (Loading) */
-        .adaptive-loading {
-            text-align: center;
-            color: #0056b3; /* Màu xanh đậm */
-        }
-        .adaptive-loading p {
-            font-style: italic;
-            color: #555;
-            margin-bottom: 0;
-        }
-
-        /* CSS cho con quay "spinner" */
-        .adaptive-loading .spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid #dbe6f0;
-            border-top-color: #0056b3;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px auto;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* 2. Trạng thái Nội dung (Content) */
-        .adaptive-content {
-            display: none; /* Ẩn ban đầu */
-        }
-
-        .adaptive-content .header {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #0056b3;
-            margin-bottom: 10px;
-        }
-
-        .adaptive-content .ai-message {
-            font-size: 1em;
-            color: #333;
-            line-height: 1.5;
-            margin-bottom: 15px;
-            padding: 12px;
-            background: #fff;
-            border-radius: 8px;
-            border: 1px dashed #0056b3;
-        }
-
-        /* CSS cho thông báo lỗi bên trong thẻ AI */
-        .adaptive-content .ai-error-message {
-             background: #fff0f0;
-             border: 1px dashed #d00;
-             color: #d00;
-             padding: 12px;
-             border-radius: 8px;
-        }
-
-        /* Thẻ tài liệu được đề xuất (nổi bật nhất) */
-        .content-card {
-            display: block;
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 15px;
-            text-decoration: none; /* Bỏ gạch chân link */
-            color: #222;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            transition: all 0.2s ease-in-out;
-        }
-        .content-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 50, 150, 0.15);
-            border-color: #0056b3;
-        }
-        .content-card .content-type {
-            font-size: 0.8em;
-            font-weight: bold;
-            color: #0056b3;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        .content-card .content-title {
-            font-size: 1.1em;
-            font-weight: bold;
-        }
-        .content-card .content-duration {
-            font-size: 0.9em;
-            color: #777;
-            margin-top: 8px;
-        }
-
-        /* 3. Trạng thái Khen ngợi (Congrats) */
-        .congrats-message {
-            text-align: center;
-            font-size: 1.1em;
-            color: #006400; /* Màu xanh lá */
-            font-weight: bold;
-            padding: 15px;
-            background: #f0fff0;
-            border: 1px solid #006400;
-            border-radius: 8px;
-        }
-
     </style>
 </head>
 <body class="bg-light">
@@ -224,8 +1163,7 @@
 
     <h1 class="h3 mb-2">Chào mừng trở lại, <span id="userNameHeader" class="text-primary"></span>!</h1>
 
-    <div id="studyNotification" class="mb-3">
-    </div>
+    <div id="studyNotification" class="mb-3"></div>
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
@@ -321,7 +1259,12 @@
     </div>
 
     <hr class="my-4">
-    <h2><i class="bi bi-search text-warning"></i> Khám phá môn học</h2>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="mb-0"><i class="bi bi-search text-warning"></i> Khám phá môn học</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
+            <i class="bi bi-plus-circle"></i> Tự tạo môn học
+        </button>
+    </div>
     <div class="row" id="exploreSubjectsList">
         <div class="col-12 text-center" id="exploreSubjectsLoading">
             <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
@@ -513,9 +1456,71 @@
         </div>
     </div>
 </div>
-<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+
+<div class="modal fade" id="videoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-youtube text-danger"></i> Gợi ý Video YouTube</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="videoForm">
+                    <div class="mb-3">
+                        <label for="videoTopic" class="form-label">Chủ đề video:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="videoTopic" required placeholder="Ví dụ: Spring Boot JWT">
+                            <button type="submit" class="btn btn-danger" id="submitVideoSearch">
+                                <span class="loading-spinner" role="status"></span>
+                                <i class="bi bi-search"></i> Tìm
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+                <div id="videoResult" class="text-center">
+                    <p class="text-muted">Nhập chủ đề và nhấn tìm kiếm...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<div class="modal fade" id="createSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Tự tạo môn học mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createSubjectForm">
+                    <div class="mb-3">
+                        <label for="newSubjectName" class="form-label">Tên môn học</label>
+                        <input type="text" class="form-control" id="newSubjectName" required placeholder="Ví dụ: Lập trình Web với Spring Boot">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSubjectCategory" class="form-label">Nhóm môn</label>
+                        <input type="text" class="form-control" id="newSubjectCategory" placeholder="Ví dụ: Lập trình Backend">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newSubjectDescription" class="form-label">Mô tả (tuỳ chọn)</label>
+                        <textarea class="form-control" id="newSubjectDescription" rows="3" placeholder="Tóm tắt nội dung môn học"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" id="createSubjectButton">
+                    <span class="loading-spinner" role="status"></span>
+                    <i class="bi bi-check-circle"></i> Tạo môn học
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -529,7 +1534,10 @@
     let quizModal = null;
     let flashcardModal = null;
     let logSessionModal = null;
+    let videoModal = null;
+    let createSubjectModal = null;
     let toastCount = 0;
+    let allSubjectsCache = [];
 
     $(document).ready(function() {
         const token = localStorage.getItem("jwtToken");
@@ -550,6 +1558,8 @@
         quizModal = new bootstrap.Modal(document.getElementById('quizModal'));
         flashcardModal = new bootstrap.Modal(document.getElementById('flashcardModal'));
         logSessionModal = new bootstrap.Modal(document.getElementById('logSessionModal'));
+        videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+        createSubjectModal = new bootstrap.Modal(document.getElementById('createSubjectModal'));
 
         setupFilters();
 
@@ -559,6 +1569,13 @@
         $("#submitQuizButton").on("click", handleGenerateQuiz);
         $("#submitFlashcardButton").on("click", handleGenerateFlashcard);
         $("#submitLogButton").on("click", handleLogSession);
+
+        $("#videoForm").on("submit", function(e) {
+            e.preventDefault();
+            handleVideoSearch();
+        });
+
+        $("#createSubjectButton").on("click", handleCreateSubject);
 
         $("#filterForm").on("submit", function(e) {
             e.preventDefault();
@@ -582,7 +1599,6 @@
         const mm = today.getMonth() + 1;
 
         $("#filterDate").val(today.toISOString().split('T')[0]);
-
         $("#filterMonth").val(mm);
 
         const yearSelects = $("#filterYearMonth, #filterYear");
@@ -623,39 +1639,32 @@
     }
 
     function loadDashboardData(userId) {
-        // ... (Hàm này giữ nguyên) ...
-        // Hiển thị loading
         $("#timeChart").hide();
         $("#activityChart").hide();
         $("#timeChartLoading").show();
         $("#activityChartLoading").show();
         $("#studyNotification").empty();
 
-        // 1. LẤY GIÁ TRỊ TỪ BỘ LỌC
         const filterType = $("#filterType").val();
         let filterDate;
 
         if (filterType === 'week') {
-            // Lấy từ ô chọn ngày
             filterDate = $("#filterDate").val();
         } else if (filterType === 'month') {
-            // Ghép tháng và năm
             const year = $("#filterYearMonth").val();
             const month = $("#filterMonth").val().padStart(2, '0');
-            filterDate = `${year}-${month}-01`; // Ví dụ: "2025-01-01"
+            filterDate = `${year}-${month}-01`;
         } else if (filterType === 'year') {
-            // Lấy từ ô chọn năm
             const year = $("#filterYear").val();
-            filterDate = `${year}-01-01`; // Ví dụ: "2025-01-01"
+            filterDate = `${year}-01-01`;
         }
 
-        // 2. GỬI AJAX VỚI DỮ LIỆU ĐÚNG
         $.ajax({
             type: "GET",
             url: `http://localhost:8080/api/dashboard/${userId}`,
             data: {
-                filterType: filterType, // Sẽ gửi "month"
-                filterDate: filterDate  // Sẽ gửi "2025-01-01"
+                filterType: filterType,
+                filterDate: filterDate
             },
             success: function(data) {
                 renderTimeChart(data.timeLabels || [], data.timeData || []);
@@ -673,7 +1682,6 @@
                 $("#studyNotification").html(`<div class="alert alert-danger">Không thể tải dữ liệu dashboard.</div>`);
             },
             complete: function() {
-                // Ẩn loading
                 $("#timeChartLoading").hide();
                 $("#activityChartLoading").hide();
             }
@@ -700,9 +1708,7 @@
             if (enrolledSubjects.length === 0) {
                 $("#noMySubjects").show();
             } else {
-
-                // (Giữ nguyên logic lặp qua các môn học)
-                for (const us of enrolledSubjects) {
+                enrolledSubjects.forEach(us => {
                     enrolledMap.set(us.subject.subjectId, us.id);
 
                     const cardHtml = `
@@ -715,6 +1721,10 @@
                                     </p>
                                 </div>
                                 <div class="subject-actions">
+                                    <button class="btn btn-outline-danger"
+                                            onclick="openVideoModal('${us.subject.subjectName}')">
+                                        <i class="bi bi-youtube me-1"></i> Video
+                                    </button>
                                     <button class="btn btn-outline-info"
                                             onclick="viewSubjectContent(${us.id})">
                                         <i class="bi bi-book me-1"></i> Học
@@ -733,74 +1743,51 @@
                                     </button>
                                 </div>
                             </div>
-                            <div id="adaptive-card-for-subject-${us.id}" class="adaptive-recommendation-box" style="display: none;">
-                                <div class="adaptive-loading">
-                                    <div class="spinner"></div>
-                                    <p>AI đang phân tích điểm yếu...</p>
-                                </div>
-                                <div class="adaptive-content"></div>
-                            </div>
-
                         </div>
                     `;
                     mySubjectsListDiv.append(cardHtml);
                     logSubjectSelect.append(
                         `<option value="${us.id}">${us.subject.subjectName}</option>`
                     );
-
-                    // KÍCH HOẠT "BÁC SĨ" AI CHO MÔN NÀY
-                    fetchAdaptiveRecommendation(us.id);
-                }
+                });
             }
 
             const allSubjects = await $.ajax({ url: "http://localhost:8080/api/subjects" });
-            const subjectsToExplore = {};
+            allSubjectsCache = allSubjects || [];
 
+            let exploreCount = 0;
             allSubjects.forEach(subject => {
                 if (!enrolledMap.has(subject.subjectId)) {
-                    //... (phần logic Khám phá môn học giữ nguyên) ...
+                    exploreCount++;
                     const category = subject.subjectCategory || 'Khác';
-                    if (!subjectsToExplore[category]) {
-                        subjectsToExplore[category] = [];
-                    }
-                    subjectsToExplore[category].push(subject);
-                }
-            });
+                    const categoryBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill mb-2">${category}</span>`;
+                    const description = subject.description ? subject.description.substring(0, 100) + '...' : '';
 
-            if (Object.keys(subjectsToExplore).length === 0) {
-                 exploreSubjectsListDiv.append('<div class="col-12"><p class="text-muted">Bạn đã đăng ký tất cả các môn học!</p></div>');
-            } else {
-                for (const categoryName in subjectsToExplore) {
-
-                    const categoryHtml = `
-                        <div class="col-12 mt-3">
-                            <h4 class="text-muted">${categoryName}</h4>
-                            <hr>
-                        </div>
-                    `;
-                    exploreSubjectsListDiv.append(categoryHtml);
-
-                    subjectsToExplore[categoryName].forEach(subject => {
-                        const description = subject.description ? subject.description.substring(0, 100) + '...' : '';
-                        const cardHtml = `
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <div class="card shadow-sm border-0 h-100">
-                                    <div class="card-body d-flex flex-column">
+                    const cardHtml = `
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card shadow-sm border-0 h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <div>
+                                        ${categoryBadge}
                                         <h5 class="card-title">${subject.subjectName}</h5>
-                                        <p class="card-text text-muted">${description}</p>
-                                        <div class="mt-auto">
-                                            <button class="btn btn-outline-primary w-100" id="enrollBtn-${subject.subjectId}" onclick="enroll(${subject.subjectId})">
-                                                <span class="loading-spinner" id="enrollSpinner-${subject.subjectId}"></span>
-                                                <i class="bi bi-plus-circle"></i> Đăng ký học
-                                            </button>
-                                        </div>
+                                    </div>
+                                    <p class="card-text text-muted">${description}</p>
+                                    <div class="mt-auto">
+                                        <button class="btn btn-outline-primary w-100" id="enrollBtn-${subject.subjectId}" onclick="enroll(${subject.subjectId})">
+                                            <span class="loading-spinner" id="enrollSpinner-${subject.subjectId}"></span>
+                                            <i class="bi bi-plus-circle"></i> Đăng ký học
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        `;
-                        exploreSubjectsListDiv.append(cardHtml);
-                    });
+                        </div>
+                    `;
+                    exploreSubjectsListDiv.append(cardHtml);
                 }
+            });
+
+            if (exploreCount === 0) {
+                exploreSubjectsListDiv.append('<div class="col-12"><p class="text-muted">Bạn đã đăng ký tất cả các môn học!</p></div>');
             }
 
         } catch (xhr) {
@@ -813,7 +1800,6 @@
     }
 
     function enroll(subjectId) {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $(`#enrollBtn-${subjectId}`);
         const spinner = $(`#enrollSpinner-${subjectId}`);
         btn.prop('disabled', true);
@@ -836,7 +1822,6 @@
     }
 
     function openPlanModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#planUserSubjectId").val(userSubjectId);
         $("#planForm")[0].reset();
         $("#planResult").hide().empty();
@@ -845,7 +1830,6 @@
     }
 
     function openQuizModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#quizUserSubjectId").val(userSubjectId);
         $("#quizForm")[0].reset();
         $("#quizResult").hide().empty();
@@ -854,20 +1838,23 @@
     }
 
     function openFlashcardModal(userSubjectId) {
-        // ... (Hàm này giữ nguyên) ...
         $("#flashcardUserSubjectId").val(userSubjectId);
         $("#flashcardForm")[0].reset();
         $("#submitFlashcardButton").prop('disabled', false).find(".loading-spinner").hide();
         flashcardModal.show();
     }
 
+    function openVideoModal(subjectName) {
+        $("#videoTopic").val(subjectName);
+        $("#videoResult").html('<p class="text-muted">Nhấn tìm kiếm để xem gợi ý...</p>');
+        videoModal.show();
+    }
+
     function viewSubjectContent(userSubjectId) {
-            // ... (Hàm này giữ nguyên) ...
-            window.location.href = "/my-subject/" + userSubjectId;
-        }
+        window.location.href = "/my-subject/" + userSubjectId;
+    }
 
     function handleGeneratePlan() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitPlanButton");
         const spinner = btn.find(".loading-spinner");
         btn.prop('disabled', true);
@@ -912,7 +1899,6 @@
     }
 
     function handleGenerateQuiz() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitQuizButton");
         const spinner = btn.find(".loading-spinner");
         btn.prop('disabled', true);
@@ -958,7 +1944,6 @@
     }
 
     function handleGenerateFlashcard() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitFlashcardButton");
         const spinner = btn.find(".loading-spinner");
         const title = $("#flashcardTitle").val();
@@ -984,13 +1969,13 @@
             },
             error: function(xhr) {
                 alert("Lỗi tạo Flashcard: " + xhr.responseText);
-                btn.prop('disabled', false); spinner.hide();
+                btn.prop('disabled', false);
+                spinner.hide();
             }
         });
     }
 
     function handleLogSession() {
-        // ... (Hàm này giữ nguyên) ...
         const btn = $("#submitLogButton");
         const spinner = btn.find(".loading-spinner");
 
@@ -1024,28 +2009,180 @@
                 alert("Lỗi khi log: " + xhr.responseText);
             },
             complete: function() {
-                btn.prop('disabled', false);
+                btn.prop('disabled', false); spinner.hide();
+            }
+        });
+    }
+
+    function handleVideoSearch() {
+        const btn = $("#submitVideoSearch");
+        const spinner = btn.find(".loading-spinner");
+        const topic = $("#videoTopic").val();
+        const resultDiv = $("#videoResult");
+
+        if (!topic) {
+            alert("Vui lòng nhập chủ đề!");
+            return;
+        }
+
+        btn.prop('disabled', true); spinner.show();
+        resultDiv.html('<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
+
+        $.ajax({
+            type: "GET",
+            url: `http://localhost:8080/api/ai/suggest-video`,
+            data: { topic: topic },
+            success: function(data) {
+                if (data && data.embedUrl) {
+                    const videoHtml = `
+                        <h5 class="mb-3">${data.title}</h5>
+                        <a href="${data.embedUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-danger mb-3">
+                            <i class="bi bi-youtube"></i> Mở trên YouTube
+                        </a>
+                    `;
+                    resultDiv.html(videoHtml);
+                } else {
+                    resultDiv.html('<p class="text-danger">Không thể tìm thấy video phù hợp.</p>');
+                }
+            },
+            error: function(xhr) {
+                resultDiv.html(`<p class="text-danger">Lỗi khi tìm video: ${xhr.responseText}</p>`);
+            },
+            complete: function() {
+                btn.prop('disabled', false); spinner.hide();
+            }
+        });
+    }
+
+    function normalizeSubjectName(name) {
+        return name.trim().toLowerCase();
+    }
+
+    function handleCreateSubject() {
+        const btn = $("#createSubjectButton");
+        const spinner = btn.find(".loading-spinner");
+
+        const name = $("#newSubjectName").val().trim();
+        const category = $("#newSubjectCategory").val().trim();
+        const description = $("#newSubjectDescription").val().trim();
+
+        if (!name) {
+            alert("Vui lòng nhập tên môn học.");
+            return;
+        }
+
+        const existsInCache = allSubjectsCache.some(s =>
+            normalizeSubjectName(s.subjectName || "") === normalizeSubjectName(name)
+        );
+
+        if (existsInCache) {
+            showToast("Môn học này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.", "error");
+            return;
+        }
+
+        const payload = {
+            subjectName: name,
+            subjectCategory: category || null,
+            description: description || null
+        };
+
+        btn.prop("disabled", true);
+        spinner.show();
+
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:8080/api/subjects",
+            contentType: "application/json",
+            data: JSON.stringify(payload),
+            success: function(newSubject) {
+                showToast("Tạo môn học mới thành công!");
+                $("#createSubjectForm")[0].reset();
+                createSubjectModal.hide();
+                loadSubjectsAndEnrollments(currentUserId);
+            },
+            error: function(xhr) {
+                if (xhr.status === 409) {
+                    showToast(xhr.responseText || "Môn học đã tồn tại trong cơ sở dữ liệu.", "error");
+                } else {
+                    showToast("Lỗi khi tạo môn học: " + (xhr.responseText || "Không rõ lỗi"), "error");
+                }
+            },
+            complete: function() {
+                btn.prop("disabled", false);
                 spinner.hide();
             }
         });
     }
 
     function renderTimeChart(labels, data) {
-        // ... (Hàm này giữ nguyên) ...
-        if(timeChartInstance) timeChartInstance.destroy();
+        if (timeChartInstance) {
+            timeChartInstance.destroy();
+        }
         const ctx = document.getElementById('timeChart').getContext('2d');
-        timeChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Số phút đã học', data: data, backgroundColor: 'rgba(0, 123, 255, 0.6)' }] }, options: { scales: { y: { beginAtZero: true } }, responsive: true } });
+        timeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số phút đã học',
+                    data: data,
+                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                    barPercentage: 0.5,
+                    categoryPercentage: 0.8
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true
+            }
+        });
     }
 
     function renderActivityChart(activityData) {
-        // ... (Hàm này giữ nguyên) ...
         if(activityChartInstance) activityChartInstance.destroy();
+
+        const activityLabels = {
+            "FLASHCARD_GENERATED": "Tạo Flashcard",
+            "QUIZ_GENERATED": "Tạo Quiz",
+            "QUIZ_COMPLETED": "Làm Quiz",
+            "PLAN_GENERATED": "Tạo Kế hoạch",
+            "STUDY_SESSION": "Phiên học",
+            "DEFAULT": "Hoạt động khác"
+        };
+
+        const translatedLabels = Object.keys(activityData).map(key => activityLabels[key] || activityLabels["DEFAULT"]);
+        const values = Object.values(activityData);
+
+        const backgroundColors = [
+            'rgba(0, 123, 255, 0.7)',
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(255, 193, 7, 0.7)',
+            'rgba(220, 53, 69, 0.7)',
+            'rgba(108, 117, 125, 0.7)'
+        ];
+
         const ctx = document.getElementById('activityChart').getContext('2d');
-        activityChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(activityData), datasets: [{ data: Object.values(activityData), backgroundColor: ['rgba(0, 123, 255, 0.7)', 'rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)', 'rgba(108, 117, 125, 0.7)'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+        activityChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: translatedLabels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
     }
 
     function showToast(message, type = "success") {
-        // ... (Hàm này giữ nguyên) ...
         const toastId = "toast-" + (toastCount++);
         const bgClass = type === "success" ? "bg-success" : "bg-danger";
 
@@ -1058,7 +2195,7 @@
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             </div>
-        `;
+       `;
 
         $("#toastContainer").append(toastHtml);
 
@@ -1069,123 +2206,6 @@
             $(this).remove();
         });
     }
-
-    // --- CÁC HÀM MỚI ĐÃ SỬA LỖI (BƯỚC 3) ---
-
-    /**
-     * SỬA LỖI: Đã chuyển từ `fetch` sang `$.ajax`
-     * Lý do: `fetch` (JavaScript gốc) không tự động gửi JWT Token.
-     * `$.ajax` (jQuery) sẽ tự động dùng `$.ajaxSetup` của bạn để gửi Token.
-     * Đây là lý do bạn nhận được "Lỗi API:" (là lỗi 401/403 Unauthorized).
-     */
-    function fetchAdaptiveRecommendation(userSubjectId) { // Bỏ 'async' vì $.ajax dùng .done/.fail
-        const card = $(`#adaptive-card-for-subject-${userSubjectId}`);
-        const loadingBox = card.find('.adaptive-loading');
-        const contentBox = card.find('.adaptive-content');
-
-        // Hiển thị thẻ (đang ở trạng thái loading)
-        card.show();
-
-        $.ajax({
-            type: "GET",
-            url: `/api/adaptive/recommendation/${userSubjectId}`,
-            // Không cần 'headers', vì $.ajaxSetup đã tự động thêm
-        })
-        .done(function(data) {
-            // 1. GỌI API THÀNH CÔNG (data là JSON trả về)
-            buildRecommendationUI(card, data);
-        })
-        .fail(function(xhr) {
-            // 2. GỌI API THẤT BẠI (Bị 401, 403, 500...)
-            console.error('Lỗi khi lấy đề xuất:', xhr.status, xhr.statusText, xhr.responseText);
-
-            // Làm cho thông báo lỗi đẹp hơn
-            let errorMsg = `Lỗi ${xhr.status}: ${xhr.statusText}`;
-            if (xhr.status === 401 || xhr.status === 403) {
-                errorMsg = "Lỗi xác thực. Vui lòng đăng nhập lại.";
-            } else if (xhr.status === 500) {
-                 errorMsg = "Lỗi máy chủ khi phân tích. Vui lòng thử lại sau.";
-            } else if (xhr.status === 0) {
-                 errorMsg = "Không thể kết nối đến máy chủ. API đang chạy chứ?";
-            }
-
-            contentBox.html(`
-                <div class="ai-error-message">
-                    <strong>Không thể tải đề xuất AI.</strong><br>
-                    ${errorMsg}
-                </div>`);
-        })
-        .always(function() {
-            // 3. LUÔN LUÔN chạy: Ẩn "Loading" và hiện "Nội dung"
-            loadingBox.hide();
-            contentBox.show();
-        });
-    }
-
-    /**
-     * "Vẽ" HTML "đặc sắc" dựa trên DTO trả về
-     * (Hàm này giữ nguyên từ code của bạn)
-     */
-    function buildRecommendationUI(cardElement, data) {
-        let html = '';
-        const contentBox = cardElement.find('.adaptive-content');
-
-        // ----------------------------------------------------
-        // TRƯỜNG HỢP 1: CÓ ĐỀ XUẤT (KỊCH BẢN TỐT NHẤT)
-        // ----------------------------------------------------
-        if (data.recommendationProvided) {
-            const content = data.recommendedContent;
-
-            // Nếu link là video youtube, trích xuất ID để tạo thumbnail
-            let videoThumbnail = '';
-            if (content.contentType === 'VIDEO' && content.urlOrData.includes('youtube.com')) {
-                try {
-                    const url = new URL(content.urlOrData);
-                    const videoId = url.searchParams.get('v');
-                    if(videoId) {
-                        videoThumbnail = `<img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" class="img-fluid rounded mb-2" alt="Video thumbnail">`;
-                    }
-                } catch(e) {} // Bỏ qua nếu URL lỗi
-            }
-
-            html = `
-                <div class="header">🌟 Gợi ý từ Trợ lý AI</div>
-
-                <div class="ai-message">
-                    "${data.recommendationText}"
-                </div>
-
-                <a href="${content.urlOrData}" target="_blank" class="content-card">
-                    ${videoThumbnail} <div class="content-type">
-                        ${content.contentType} </div>
-                    <div class="content-title">
-                        ${content.title} </div>
-                    <div class="content-duration">
-                        ⏱️ Ước tính: ${content.estimatedDurationMinutes} phút
-                    </div>
-                </a>
-            `;
-        }
-
-        // ----------------------------------------------------
-        // TRƯỜNG HỢP 2: KHÔNG CÓ ĐỀ XUẤT (VÌ USER QUÁ GIỎI)
-        // ----------------------------------------------------
-        else {
-            // data.recommendationText sẽ là lời khen (nếu không có lỗi)
-            // hoặc là lời động viên (nếu có lỗi nhưng thiếu tài liệu)
-            html = `
-                <div class="header">🎉 Thông báo từ AI</div>
-                <div class="congrats-message">
-                    ${data.recommendationText}
-                </div>
-            `;
-        }
-
-        // 4. Bơm HTML vào trang
-        contentBox.html(html);
-    }
-
-
 </script>
 </body>
 </html>

@@ -7,7 +7,8 @@ import java.util.List;
 @Data
 public class FlashcardSetDTO {
     private Integer setId;
+    private Integer userSubjectId;
     private String title;
     private LocalDateTime generatedAt;
-    private List<FlashcardDTO> flashcards; // Lồng DTO
+    private List<FlashcardDTO> flashcards;
 }

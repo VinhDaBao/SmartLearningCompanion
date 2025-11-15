@@ -44,13 +44,9 @@ public class FlashcardService {
     @Transactional
     public FlashcardSet createFlashcardSet(FlashcardRequestDTO requestDTO) {
 
-        // --- (ĐÂY LÀ DÒNG SỬA LỖI) ---
-        // Chúng ta tìm bằng 'userSubjectId' (là ID của bản ghi đăng ký)
         UserSubject userSubject = userSubjectRepository.findById(requestDTO.getUserSubjectId())
                 .orElseThrow(() -> new RuntimeException("UserSubject not found"));
-        // --- (HẾT PHẦN SỬA LỖI) ---
 
-        // 2. Gọi Service AI
         String jsonResponse = aiGenerationService.generateFlashcards(
                 userSubject.getUser(),
                 userSubject.getSubject(),
@@ -58,18 +54,16 @@ public class FlashcardService {
                 requestDTO.getNumberOfCards()
         );
 
-        // 3. Phân tích (Parse) chuỗi JSON
         try {
             List<AiFlashcardDTO> aiCards = objectMapper.readValue(
                     jsonResponse,
                     new TypeReference<List<AiFlashcardDTO>>() {}
             );
 
-            // 4. Tạo các Entity
             FlashcardSet newSet = new FlashcardSet();
             newSet.setUserSubject(userSubject);
             newSet.setTitle(requestDTO.getTitle());
-            newSet.setAiModelUsed("gemini-pro"); // (Hoặc model AI bạn đang dùng)
+            newSet.setAiModelUsed("gemini-pro");
 
             List<Flashcard> cardEntities = aiCards.stream().map(aiCard -> {
                 Flashcard card = new Flashcard();
@@ -82,7 +76,6 @@ public class FlashcardService {
             newSet.setFlashcards(cardEntities);
             FlashcardSet savedSet = flashcardSetRepository.save(newSet);
 
-            // 6. GHI LOG
             try {
                 learningLogService.logActivity(
                         userSubject.getUser(),
@@ -104,10 +97,6 @@ public class FlashcardService {
         }
     }
 
-    /**
-     * Lấy chi tiết đầy đủ của một bộ Flashcard (bao gồm tất cả các thẻ)
-     * (Hàm này đã đúng, giữ nguyên)
-     */
     @Transactional(readOnly = true)
     public FlashcardSetDTO getFlashcardSetDetails(Integer setId) {
 
@@ -115,6 +104,7 @@ public class FlashcardService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bộ Flashcard: " + setId));
 
         FlashcardSetDTO setDTO = modelMapper.map(flashcardSet, FlashcardSetDTO.class);
+        setDTO.setUserSubjectId(flashcardSet.getUserSubject().getId());
 
         return setDTO;
     }

@@ -1,4 +1,3 @@
-// Đặt tại: src/main/java/com/example/smartlearning/service/AiGenerationService.java
 package com.example.smartlearning.service;
 
 import com.google.genai.Client;
@@ -6,20 +5,28 @@ import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+
 import com.example.smartlearning.dto.FlashcardDTO;
+import com.example.smartlearning.dto.ai.VideoSuggestionDTO;
 import com.example.smartlearning.model.Subject;
 import com.example.smartlearning.model.SubjectContent;
 import com.example.smartlearning.model.Topic;
 import com.example.smartlearning.model.User;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AiGenerationService {
@@ -27,10 +34,14 @@ public class AiGenerationService {
     @Value("${google.gemini.api.key}")
     private String geminiApiKey;
 
+    @Value("${google.gemini.api.model}")
+    private String aiModelUsed;
+
     @Autowired
-    PDFService pdfService; // (Lỗi có thể nằm ở đây, nếu PDFService không đọc được file)
+    PDFService pdfService;
 
     private final ObjectMapper mapper = new ObjectMapper();
+
     private Client geminiClient;
 
     @PostConstruct
@@ -40,10 +51,15 @@ public class AiGenerationService {
                 .build();
     }
 
-    /**
-     * Tạo một Lộ trình học (Study Plan)
-     * (Hàm này giữ nguyên)
-     */
+    public String getAiModelUsed() {
+        return aiModelUsed;
+    }
+
+    private String extractJsonString(String rawText) {
+        if (rawText == null) return null;
+        return rawText.trim();
+    }
+
     public String generateStudyPlan(User user,
                                     Subject subject,
                                     String customPrompt,
@@ -99,9 +115,6 @@ public class AiGenerationService {
     }
 
 
-    /**
-     * Tạo một bộ Quiz - ĐÃ THÊM LOG DEBUG
-     */
     public String generateQuiz(User user, Subject subject, String topic, int numQuestions, String lectureText) {
 
         String systemPrompt = String.format(
@@ -184,12 +197,7 @@ public class AiGenerationService {
     }
 
 
-    /**
-     * Tạo một bộ Flashcard
-     * (Hàm này giữ nguyên)
-     */
     public String generateFlashcards(User user, Subject subject, String topic, int numCards) {
-
         String systemPrompt = String.format(
                 "Bạn là một trợ lý học tập, chuyên tạo flashcards. Hãy tạo %d flashcard.\n" +
                         "Luôn luôn trả về kết quả dưới dạng một mảng (array) JSON. KHÔNG dùng markdown.\n" +
@@ -244,11 +252,34 @@ public class AiGenerationService {
         }
     }
 
+    public VideoSuggestionDTO googleSearchAndSuggestVideo(String topic) {
+        System.out.println("--- GỢI Ý VIDEO YOUTUBE CHO: " + topic + " ---");
+        String safeTopic = (topic == null || topic.isBlank())
+                ? "Java programming tutorial for beginners"
+                : topic.trim();
 
-    /**
-     * Tạo Flashcard từ một phần text (chunk)
-     * (Giữ nguyên)
-     */
+        String searchText = "học " + safeTopic + " cho người mới bắt đầu";
+        String encoded = URLEncoder.encode(searchText, StandardCharsets.UTF_8);
+        String youtubeSearchUrl = "https://www.youtube.com/results?search_query=" + encoded;
+
+        VideoSuggestionDTO dto = new VideoSuggestionDTO();
+        dto.setTitle("Xem video YouTube về: " + searchText);
+        dto.setEmbedUrl(youtubeSearchUrl);
+
+        return dto;
+    }
+
+
+    private String extractYouTubeVideoId(String youtubeUrl) {
+        String videoId = null;
+        Pattern pattern = Pattern.compile("v=([a-zA-Z0-9_-]{11})");
+        Matcher matcher = pattern.matcher(youtubeUrl);
+        if (matcher.find()) {
+            videoId = matcher.group(1);
+        }
+        return videoId;
+    }
+
     public List<FlashcardDTO> generateFlashcardsForChunk(String chunk, int numCards) {
 
         String systemPrompt =
@@ -277,9 +308,6 @@ public class AiGenerationService {
         }
     }
 
-    /**
-     * (Hàm này giữ nguyên)
-     */
     public List<FlashcardDTO> generateFlashcardsFromLargePdf(
             MultipartFile pdfFile,
             int totalCards

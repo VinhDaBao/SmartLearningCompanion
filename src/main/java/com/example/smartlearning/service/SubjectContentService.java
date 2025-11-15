@@ -3,7 +3,7 @@ package com.example.smartlearning.service;
 
 import com.example.smartlearning.dto.FlashcardSetInfoDTO;
 import com.example.smartlearning.dto.QuizInfoDTO;
-import com.example.smartlearning.dto.StudyPlanInfoDTO;
+import com.example.smartlearning.dto.StudyPlanDTO;
 import com.example.smartlearning.dto.SubjectContentDTO;
 import com.example.smartlearning.model.FlashcardSet;
 import com.example.smartlearning.model.Quiz;
@@ -57,8 +57,14 @@ public class SubjectContentService {
         List<Quiz> quizzes = quizRepository.findByUserSubjectId(userSubjectId);
         List<FlashcardSet> sets = flashcardSetRepository.findByUserSubjectId(userSubjectId);
 
+<<<<<<< HEAD
         List<StudyPlanInfoDTO> planDTOs = plans.stream()
                 .map(p -> modelMapper.map(p, StudyPlanInfoDTO.class))
+=======
+        // 5. Chuyển đổi (Map) Entities -> DTOs
+        List<StudyPlanDTO> planDTOs = plans.stream()
+                .map(p -> modelMapper.map(p, StudyPlanDTO.class))
+>>>>>>> 35964d755b3882ca5379f09e21a9907d8983063a
                 .collect(Collectors.toList());
 
         // --- BẮT ĐẦU SỬA ĐỔI LOGIC QUIZ ---

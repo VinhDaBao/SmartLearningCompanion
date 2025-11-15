@@ -1,3 +1,13 @@
+//package com.example.smartlearning.dto;
+//
+//import lombok.Data;
+//
+//@Data
+//public class SubjectDTO {
+//    private Integer subjectId;
+//    private String subjectName;
+//    private String description;
+//}
 package com.example.smartlearning.dto;
 
 import lombok.Data;
@@ -6,5 +16,6 @@ import lombok.Data;
 public class SubjectDTO {
     private Integer subjectId;
     private String subjectName;
+    private String subjectCategory;
     private String description;
 }

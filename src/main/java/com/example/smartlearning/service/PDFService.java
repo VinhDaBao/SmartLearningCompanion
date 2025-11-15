@@ -1,4 +1,3 @@
-// Đặt tại: src/main/java/com/example/smartlearning/service/PDFService.java
 package com.example.smartlearning.service;
 
 import java.io.InputStream;
@@ -12,6 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class PDFService {
+	// -------------------------------------------------------------------
+    // 1) Đọc PDF → String
+    // -------------------------------------------------------------------
     public String extractTextFromPdf(MultipartFile file) {
         try (InputStream is = file.getInputStream(); PDDocument doc = PDDocument.load(is)) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -21,10 +23,18 @@ public class PDFService {
         }
     }
 
+
+    // -------------------------------------------------------------------
+    // 2) Ước lượng số token (tương đối chính xác)
+    // -------------------------------------------------------------------
     public int estimateTokens(String text) {
         return (int) Math.ceil(text.length() / 3.2);  // 3.2 ký tự/token
     }
 
+
+    // -------------------------------------------------------------------
+    // 3) Chia text PDF thành nhiều chunk nhỏ theo token
+    // -------------------------------------------------------------------
     public List<String> splitTextIntoChunks(String text, int maxTokens) {
 
         List<String> chunks = new ArrayList<>();
@@ -52,4 +62,6 @@ public class PDFService {
 
         return chunks;
     }
+
+
 }

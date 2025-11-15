@@ -14,19 +14,16 @@ public class StudyPlan {
     @Column(name = "study_plan_id")
     private Integer studyPlanId;
 
-    // @Lob dùng cho các kiểu dữ liệu lớn như NVARCHAR(MAX)
     @Lob
     @Column(name = "plan_content", nullable = false, columnDefinition = "NVARCHAR(MAX)")
-    private String planContent; // Nội dung lộ trình (text, JSON, hoặc Markdown)
+    private String planContent;
 
     @Column(name = "generated_at", updatable = false)
     private LocalDateTime generatedAt;
 
     @Column(name = "ai_model_used")
-    private String aiModelUsed; // Ví dụ: "gpt-4o-mini"
+    private String aiModelUsed;
 
-    // --- Mối quan hệ ---
-    // Nhiều lộ trình có thể thuộc về MỘT lần đăng ký môn học
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_subject_id", nullable = false)
     private UserSubject userSubject;
